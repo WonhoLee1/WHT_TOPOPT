@@ -1,0 +1,142 @@
+{
+  "timestamp": "2026-11-02 00:05:34",
+  "resolution_2d": [
+    180,
+    60
+  ],
+  "resolution_3d": [
+    60,
+    20,
+    10
+  ],
+  "records_2d_cantilever": [
+    {
+      "algo": "MMA [2D High-Res]",
+      "compliance": 235.89934128764193,
+      "volfrac": 0.3999721374091907,
+      "grayness": 0.05343395383426082,
+      "iters": 35,
+      "converged": false,
+      "t_total_s": 78.59526119999646
+    },
+    {
+      "algo": "GCMMA [2D High-Res]",
+      "compliance": 246.1990570712096,
+      "volfrac": 0.3996826335171309,
+      "grayness": 0.06330600258239445,
+      "iters": 35,
+      "converged": false,
+      "t_total_s": 61.490873399998236
+    },
+    {
+      "algo": "SEMDOT [2D High-Res]",
+      "compliance": 197.7648282025183,
+      "volfrac": 0.39999587449590235,
+      "grayness": 0.023101851024413367,
+      "iters": 30,
+      "converged": true,
+      "t_total_s": 59.662515500000154
+    },
+    {
+      "algo": "BESO [2D High-Res]",
+      "compliance": 205.61428546650987,
+      "volfrac": 0.39944444444444444,
+      "grayness": 0.0,
+      "iters": 27,
+      "converged": true,
+      "t_total_s": 49.915576400002465
+    },
+    {
+      "algo": "SE-AHCA [2D High-Res]",
+      "compliance": 545.6341788996627,
+      "volfrac": 0.3998503945342006,
+      "grayness": 0.20971387463865174,
+      "iters": 35,
+      "converged": false,
+      "t_total_s": 71.44900179999968
+    }
+  ],
+  "records_2d_mbb": [
+    {
+      "algo": "MMA [2D High-Res]",
+      "compliance": 257.98503667587835,
+      "volfrac": 0.39997094030863184,
+      "grayness": 0.04732121432213502,
+      "iters": 35,
+      "converged": false,
+      "t_total_s": 55.60639579999406
+    },
+    {
+      "algo": "GCMMA [2D High-Res]",
+      "compliance": 266.027654252775,
+      "volfrac": 0.39966873336726083,
+      "grayness": 0.05075431725376081,
+      "iters": 35,
+      "converged": false,
+      "t_total_s": 45.95014000000083
+    },
+    {
+      "algo": "SEMDOT [2D High-Res]",
+      "compliance": 230.6477965742605,
+      "volfrac": 0.4000025239626883,
+      "grayness": 0.01745360148536737,
+      "iters": 25,
+      "converged": true,
+      "t_total_s": 52.17144840000401
+    },
+    {
+      "algo": "BESO [2D High-Res]",
+      "compliance": 237.63354707774678,
+      "volfrac": 0.39944444444444444,
+      "grayness": 0.0,
+      "iters": 32,
+      "converged": true,
+      "t_total_s": 70.73140179999609
+    },
+    {
+      "algo": "SE-AHCA [2D High-Res]",
+      "compliance": 595.2867656292542,
+      "volfrac": 0.39950728107660677,
+      "grayness": 0.20971008111567918,
+      "iters": 35,
+      "converged": false,
+      "t_total_s": 63.05572540000139
+    }
+  ],
+  "records_3d": {
+    "cantilever_free": {
+      "compliance": 37.50887032530499,
+      "volfrac": 0.2999603775452581,
+      "grayness": 0.08193146572326336,
+      "t_total_s": 182.37740849999682,
+      "watertight": true
+    },
+    "cantilever_ext": {
+      "compliance": 48.31896999833286,
+      "volfrac": 0.29995343728364926,
+      "grayness": 0.10444169983954728,
+      "t_total_s": 125.4078584999952,
+      "watertight": true
+    },
+    "mbb_free": {
+      "compliance": 40.520337773841725,
+      "volfrac": 0.29993186477418166,
+      "grayness": 0.0777872467869708,
+      "t_total_s": 168.22071549999964,
+      "watertight": true
+    },
+    "mbb_ext": {
+      "compliance": 45.219310133930584,
+      "volfrac": 0.29992138593549733,
+      "grayness": 0.08086056408564245,
+      "t_total_s": 149.89105330000166,
+      "watertight": true
+    }
+  },
+  "solver_timings_ms": {
+    "MKL PARDISO": 3525.393666665574,
+    "SciPy SuperLU": 38445.526566666864,
+    "Kratos C++ OpenMP": 33962.616666666385,
+    "FrontISTR v6.0 SMP": 19203.752800000075
+  }
+}

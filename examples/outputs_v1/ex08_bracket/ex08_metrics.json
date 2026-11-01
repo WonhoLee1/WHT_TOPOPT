@@ -1,0 +1,67 @@
+{
+  "timestamp": "2026-11-02 00:48:14",
+  "benchmark_name": "ex08_kratos_native_bracket_3d",
+  "mesh_resolution": {
+    "nx": 50,
+    "ny": 25,
+    "nz": 20,
+    "n_elements": 25000,
+    "n_dofs": 83538,
+    "dx_mm": 2.4,
+    "dy_mm": 2.4,
+    "dz_mm": 2.5
+  },
+  "material": {
+    "name": "Ti-6Al-4V Grade 5",
+    "e0_mpa": 110000.0,
+    "nu": 0.31,
+    "yield_limit_mpa": 830.0,
+    "density_t_mm3": 4.43e-09
+  },
+  "cases": {
+    "free_3d_mma": {
+      "display_name": "자유 3D 유기적 형상 (Free 3D MMA)",
+      "compliance_mj": 85.60656227710811,
+      "volume_fraction": 0.24993050949225487,
+      "max_stress_mpa": 3.3952042738553185,
+      "safety_factor": 244.4624632430494,
+      "freq1_hz": 76047.17581711398,
+      "com_shift_mm": 4.576981101723479,
+      "stl_watertight": true,
+      "stl_volume_mm3": 98901.81903824955,
+      "total_time_sec": 1414.1292528999984,
+      "avg_step_ms": 26994.01519799998,
+      "avg_fem_ms": 25743.272233999887
+    },
+    "extruded_y_mma": {
+      "display_name": "Y-압출 제조 제약 (Y-Extruded MMA)",
+      "compliance_mj": 86.1129577107176,
+      "volume_fraction": 0.24993794529241395,
+      "max_stress_mpa": 39.86133627586545,
+      "safety_factor": 20.822182032631307,
+      "freq1_hz": 71105.2288718387,
+      "com_shift_mm": 6.2953221220429825,
+      "stiffness_penalty_pct": 0.5915381019159299,
+      "stl_watertight": true,
+      "stl_volume_mm3": 106250.83997119742,
+      "total_time_sec": 1449.5949065000023,
+      "avg_step_ms": 28591.825869999597,
+      "avg_fem_ms": 27722.12171600011
+    },
+    "se_ahca": {
+      "display_name": "SE-AHCA 응력-에너지 적응형 최적화 (SE-AHCA)",
+      "compliance_mj": 85.77848349661618,
+      "volume_fraction": 0.25574597852024955,
+      "max_stress_mpa": 3.66149506935957,
+      "safety_factor": 226.6833586492238,
+      "freq1_hz": 71188.48612955844,
+      "com_shift_mm": 4.564497264547558,
+      "stl_watertight": true,
+      "stl_volume_mm3": 103091.50331026362,
+      "total_time_sec": 840.455773099995,
+      "avg_step_ms": 16425.694967999734,
+      "avg_fem_ms": 16216.160468000015
+    }
+  },
+  "kratos_speedup_vs_scipy": 4.35
+}

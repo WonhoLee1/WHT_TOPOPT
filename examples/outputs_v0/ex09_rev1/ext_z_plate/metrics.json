@@ -1,0 +1,10 @@
+{
+  "solver": "builtin",
+  "extrusion_axis": "z_plate",
+  "final_compliance": 330205.0366910012,
+  "final_volume": 0.24994832847408696,
+  "peak_stress_mpa": 727.8425082232498,
+  "peak_dyn_disp_mm": 20.09146771686209,
+  "avg_dyn_time_s": 6.843678483999684,
+  "avg_total_time_s": 9.164031307999975
+}

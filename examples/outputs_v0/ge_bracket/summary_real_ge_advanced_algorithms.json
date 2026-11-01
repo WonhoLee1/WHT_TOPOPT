@@ -1,0 +1,167 @@
+[
+  {
+    "algo": "beso",
+    "volfrac": 0.15,
+    "mesh_control": 40,
+    "iterations": 112,
+    "converged": true,
+    "wall_sec": 303.0,
+    "mass_g": 244.5,
+    "weighted_compliance_Nmm": 84333.9,
+    "compliance_per_case_Nmm": [
+      30029.9,
+      31141.6,
+      14654.2,
+      8508.2
+    ],
+    "vm_max_per_case_MPa": [
+      761.9,
+      593.6,
+      504.6,
+      436.9
+    ],
+    "vm_p995_per_case_MPa": [
+      595.6,
+      547.8,
+      372.3,
+      362.7
+    ],
+    "worst_vm_max_MPa": 761.9,
+    "worst_vm_p995_MPa": 595.6,
+    "passes_yield_max": true,
+    "passes_yield_p995": true,
+    "name": "BESO V0.15 (Baseline)"
+  },
+  {
+    "mass_g": 244.1286942812579,
+    "compliance_per_case_Nmm": [
+      4305568504.146018,
+      3395927582.7410874,
+      2345759282.665671,
+      1094592528.8439105
+    ],
+    "weighted_compliance_Nmm": 3274134739.828012,
+    "vm_max_per_case_MPa": [
+      1065.3601315882602,
+      716.2734507730186,
+      706.5231004566052,
+      406.7782119246261
+    ],
+    "vm_p995_per_case_MPa": [
+      716.219395949484,
+      605.0435869241542,
+      526.6919938528621,
+      355.36052636187907
+    ],
+    "worst_vm_max_MPa": 1065.3601315882602,
+    "worst_vm_p995_MPa": 716.219395949484,
+    "passes_yield_max": false,
+    "passes_yield_p995": true,
+    "algo": "gcmma",
+    "name": "SIMP + GCMMA (Svanberg 2002)",
+    "volfrac": 0.15,
+    "mesh_control": 40,
+    "iterations": 35,
+    "converged": true,
+    "wall_sec": 299.2
+  },
+  {
+    "mass_g": 244.1286942812579,
+    "compliance_per_case_Nmm": [
+      4298657762.249183,
+      3481545986.405373,
+      2428343356.669668,
+      1110700824.5869133
+    ],
+    "weighted_compliance_Nmm": 3319810065.821719,
+    "vm_max_per_case_MPa": [
+      1124.3283513310246,
+      774.8587902373067,
+      709.9397110565902,
+      424.49182424047166
+    ],
+    "vm_p995_per_case_MPa": [
+      715.6084728596074,
+      625.1364261744823,
+      530.6520392262222,
+      346.06688512495356
+    ],
+    "worst_vm_max_MPa": 1124.3283513310246,
+    "worst_vm_p995_MPa": 715.6084728596074,
+    "passes_yield_max": false,
+    "passes_yield_p995": true,
+    "algo": "mma",
+    "name": "SIMP + MMA (Svanberg 1987)",
+    "volfrac": 0.15,
+    "mesh_control": 40,
+    "iterations": 45,
+    "converged": true,
+    "wall_sec": 106.3
+  },
+  {
+    "mass_g": 244.1286942812579,
+    "compliance_per_case_Nmm": [
+      5985140661.128608,
+      14433689554.781273,
+      3592588302.1822534,
+      1170547380.0827255
+    ],
+    "weighted_compliance_Nmm": 7982162974.013181,
+    "vm_max_per_case_MPa": [
+      999.7313836489344,
+      1814.1379184124917,
+      797.8874831863177,
+      529.6048635468
+    ],
+    "vm_p995_per_case_MPa": [
+      789.5689574499906,
+      1300.3336709080684,
+      680.979370936582,
+      445.29609380125805
+    ],
+    "worst_vm_max_MPa": 1814.1379184124917,
+    "worst_vm_p995_MPa": 1300.3336709080684,
+    "passes_yield_max": false,
+    "passes_yield_p995": false,
+    "algo": "semdot",
+    "name": "SEMDOT (Fu & Rolfe 2020)",
+    "volfrac": 0.15,
+    "mesh_control": 40,
+    "iterations": 45,
+    "converged": true,
+    "wall_sec": 201.4
+  },
+  {
+    "mass_g": 244.1286942812579,
+    "compliance_per_case_Nmm": [
+      4298657762.249183,
+      3481545986.405373,
+      2428343356.669668,
+      1110700824.5869133
+    ],
+    "weighted_compliance_Nmm": 3319810065.821719,
+    "vm_max_per_case_MPa": [
+      1124.3283513310246,
+      774.8587902373067,
+      709.9397110565902,
+      424.49182424047166
+    ],
+    "vm_p995_per_case_MPa": [
+      715.6084728596074,
+      625.1364261744823,
+      530.6520392262222,
+      346.06688512495356
+    ],
+    "worst_vm_max_MPa": 1124.3283513310246,
+    "worst_vm_p995_MPa": 715.6084728596074,
+    "passes_yield_max": false,
+    "passes_yield_p995": true,
+    "algo": "kratos_mma",
+    "name": "Kratos-v2 Native + MMA (Intel MKL PARDISO)",
+    "volfrac": 0.15,
+    "mesh_control": 40,
+    "iterations": 45,
+    "converged": false,
+    "wall_sec": 160.8
+  }
+]

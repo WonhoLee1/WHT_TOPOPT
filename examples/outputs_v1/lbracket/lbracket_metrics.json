@@ -1,0 +1,64 @@
+{
+  "benchmark": "ex01_lbracket_stress_3d",
+  "mesh_spec": {
+    "nelx": 60,
+    "nely": 60,
+    "nelz": 10,
+    "dx_mm": 2.0,
+    "total_hex8": 36000,
+    "active_hex8": 23040,
+    "void_hex8": 12960,
+    "extrusion_axis": "z",
+    "thickness_mm": 20.0
+  },
+  "performance": {
+    "compliance_mma": {
+      "compliance": 14.532684958137342,
+      "peak_von_mises_stress": 0.02391186139512687,
+      "volume_fraction": 0.6241512437497169
+    },
+    "p_norm_stress_mma": {
+      "compliance": 19.948699901017868,
+      "peak_von_mises_stress": 0.01975661973652668,
+      "stress_reduction_pct": 17.377324123528968,
+      "volume_fraction": 0.6235272993549611
+    },
+    "se_ahca": {
+      "compliance": 18.87072517188996,
+      "peak_von_mises_stress": 0.028828176281704816,
+      "stress_reduction_pct": -20.560151321301433,
+      "volume_fraction": 0.6107113162991045
+    }
+  },
+  "computational_profiling": {
+    "t_fem_sec": 92.15377040002204,
+    "t_sens_sec": 26.985056500030623,
+    "t_opt_sec": 7.511875400028657,
+    "t_total_sec": 133.57432970000082,
+    "avg_step_time_sec": 1.7809910626666776,
+    "pypardiso_time_sec": 0.4318691000007675,
+    "scipy_time_sec": 0.0037241999962134287,
+    "kratos_time_sec": 0.4966494650008826,
+    "speedup_ratio": 0.00862344630863104
+  },
+  "stl_verification": {
+    "is_watertight": true,
+    "open_edges": 0,
+    "n_vertices": 6920,
+    "n_faces": 13844,
+    "solid_volume_mm3": 145593.34828857624
+  },
+  "exported_files": {
+    "stl_file": "D:\\PythonCodeStudy\\CAD-CAE-COPILOT\\wht_topopt\\examples\\outputs_v1\\lbracket\\lbracket_3d.stl",
+    "gif_animation": "D:\\PythonCodeStudy\\CAD-CAE-COPILOT\\wht_topopt\\examples\\outputs_v1\\lbracket\\lbracket_progression.gif",
+    "3way_comparison_png": "D:\\PythonCodeStudy\\CAD-CAE-COPILOT\\wht_topopt\\examples\\outputs_v1\\lbracket\\lbracket_3way_comparison_3d.png",
+    "convergence_png": "D:\\PythonCodeStudy\\CAD-CAE-COPILOT\\wht_topopt\\examples\\outputs_v1\\lbracket\\lbracket_convergence.png",
+    "compliance_voxels_png": "D:\\PythonCodeStudy\\CAD-CAE-COPILOT\\wht_topopt\\examples\\outputs_v1\\lbracket\\lbracket_compliance_voxels_3d.png",
+    "compliance_cad_png": "D:\\PythonCodeStudy\\CAD-CAE-COPILOT\\wht_topopt\\examples\\outputs_v1\\lbracket\\lbracket_compliance_cad_3d.png",
+    "stress_voxels_png": "D:\\PythonCodeStudy\\CAD-CAE-COPILOT\\wht_topopt\\examples\\outputs_v1\\lbracket\\lbracket_stress_voxels_3d.png",
+    "stress_cad_png": "D:\\PythonCodeStudy\\CAD-CAE-COPILOT\\wht_topopt\\examples\\outputs_v1\\lbracket\\lbracket_stress_cad_3d.png",
+    "hca_voxels_png": "D:\\PythonCodeStudy\\CAD-CAE-COPILOT\\wht_topopt\\examples\\outputs_v1\\lbracket\\lbracket_hca_voxels_3d.png",
+    "hca_cad_png": "D:\\PythonCodeStudy\\CAD-CAE-COPILOT\\wht_topopt\\examples\\outputs_v1\\lbracket\\lbracket_hca_cad_3d.png",
+    "html_master_report": "D:\\PythonCodeStudy\\CAD-CAE-COPILOT\\wht_topopt\\examples\\outputs_v1\\lbracket\\lbracket_comprehensive_master_report.html"
+  }
+}

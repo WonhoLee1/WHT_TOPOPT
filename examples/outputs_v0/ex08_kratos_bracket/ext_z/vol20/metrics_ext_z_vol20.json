@@ -1,0 +1,512 @@
+{
+  "target_vol": 0.2,
+  "final_volfrac": 0.19998300006502603,
+  "final_compliance": 86.9390475644647,
+  "final_stress": 7.174712500522936,
+  "safety_factor": 115.6840779250046,
+  "final_freq1": 47721.16406139513,
+  "is_watertight": true,
+  "stl_volume": 86668.88211610314,
+  "records": [
+    {
+      "iteration": 1,
+      "compliance": 117.39339617476068,
+      "volume_fraction": 0.17223979590995797,
+      "max_change": 0.14984903619258733,
+      "max_stress_mpa": 85.06813133325466,
+      "com_shift_mm": 4.905022417698806,
+      "freq1_hz": 4225.962759300628,
+      "step_time_ms": 17948.772499999905
+    },
+    {
+      "iteration": 2,
+      "compliance": 94.26374333875474,
+      "volume_fraction": 0.1873839055557362,
+      "max_change": 0.14983759870935298,
+      "max_stress_mpa": 30.829303042396756,
+      "com_shift_mm": 4.453941310585268,
+      "freq1_hz": 13259.613925599047,
+      "step_time_ms": 9371.221499997773
+    },
+    {
+      "iteration": 3,
+      "compliance": 90.19454875594789,
+      "volume_fraction": 0.195118853403429,
+      "max_change": 0.14975196943791114,
+      "max_stress_mpa": 18.622475514888524,
+      "com_shift_mm": 4.2393345941111775,
+      "freq1_hz": 22949.13037246462,
+      "step_time_ms": 10378.569500004232
+    },
+    {
+      "iteration": 4,
+      "compliance": 89.02885289487912,
+      "volume_fraction": 0.1974410996718519,
+      "max_change": 0.1497202630697123,
+      "max_stress_mpa": 15.208359791043433,
+      "com_shift_mm": 4.159852603917784,
+      "freq1_hz": 29143.86758564493,
+      "step_time_ms": 24155.110899999272
+    },
+    {
+      "iteration": 5,
+      "compliance": 88.35226081716647,
+      "volume_fraction": 0.1982161571963352,
+      "max_change": 0.14969723278122699,
+      "max_stress_mpa": 12.132288384423333,
+      "com_shift_mm": 4.07484884889109,
+      "freq1_hz": 34041.49022414726,
+      "step_time_ms": 10964.316199999303
+    },
+    {
+      "iteration": 6,
+      "compliance": 87.83362971504972,
+      "volume_fraction": 0.19797019750424807,
+      "max_change": 0.1497258787615365,
+      "max_stress_mpa": 9.890172950071177,
+      "com_shift_mm": 4.011687034353496,
+      "freq1_hz": 38922.39666809822,
+      "step_time_ms": 8557.769600003667
+    },
+    {
+      "iteration": 7,
+      "compliance": 87.42382329232595,
+      "volume_fraction": 0.1973971580669758,
+      "max_change": 0.14968369922605274,
+      "max_stress_mpa": 8.291750472022366,
+      "com_shift_mm": 3.98309977904529,
+      "freq1_hz": 43484.42810729357,
+      "step_time_ms": 9003.597800001444
+    },
+    {
+      "iteration": 8,
+      "compliance": 87.17188299879832,
+      "volume_fraction": 0.19715204581928497,
+      "max_change": 0.14969807547288377,
+      "max_stress_mpa": 7.548099293776835,
+      "com_shift_mm": 3.9840940528702085,
+      "freq1_hz": 46176.25633674892,
+      "step_time_ms": 8118.734299998323
+    },
+    {
+      "iteration": 9,
+      "compliance": 87.06388157134911,
+      "volume_fraction": 0.19698026930422016,
+      "max_change": 0.14976033270573008,
+      "max_stress_mpa": 7.420691904015336,
+      "com_shift_mm": 4.0407462154628355,
+      "freq1_hz": 47331.38648508451,
+      "step_time_ms": 8277.921799999604
+    },
+    {
+      "iteration": 10,
+      "compliance": 87.00194586426719,
+      "volume_fraction": 0.19716531831773784,
+      "max_change": 0.14977406621607492,
+      "max_stress_mpa": 7.314206226009548,
+      "com_shift_mm": 4.112636998635747,
+      "freq1_hz": 47978.90100515639,
+      "step_time_ms": 8805.691800000204
+    },
+    {
+      "iteration": 11,
+      "compliance": 86.97827123927975,
+      "volume_fraction": 0.19762412216620986,
+      "max_change": 0.14973721338196533,
+      "max_stress_mpa": 7.284304449887129,
+      "com_shift_mm": 4.19268733545405,
+      "freq1_hz": 48010.0832332997,
+      "step_time_ms": 8422.757100001036
+    },
+    {
+      "iteration": 12,
+      "compliance": 86.97181664678757,
+      "volume_fraction": 0.19803990972854513,
+      "max_change": 0.14973574138192858,
+      "max_stress_mpa": 7.2765596069405625,
+      "com_shift_mm": 4.264906325318947,
+      "freq1_hz": 47827.19697529373,
+      "step_time_ms": 8645.773800002644
+    },
+    {
+      "iteration": 13,
+      "compliance": 86.96651714390713,
+      "volume_fraction": 0.19851988847006405,
+      "max_change": 0.1492546335392314,
+      "max_stress_mpa": 7.24580978032162,
+      "com_shift_mm": 4.319297704848985,
+      "freq1_hz": 47691.359819803074,
+      "step_time_ms": 8452.054599998519
+    },
+    {
+      "iteration": 14,
+      "compliance": 86.95899822667107,
+      "volume_fraction": 0.1989044818681447,
+      "max_change": 0.14929282482455386,
+      "max_stress_mpa": 7.201723078955399,
+      "com_shift_mm": 4.357850775134935,
+      "freq1_hz": 47664.560258255675,
+      "step_time_ms": 8937.503100001777
+    },
+    {
+      "iteration": 15,
+      "compliance": 86.95593965377402,
+      "volume_fraction": 0.19919316159983924,
+      "max_change": 0.14933580309314698,
+      "max_stress_mpa": 7.187141721341635,
+      "com_shift_mm": 4.386571661411612,
+      "freq1_hz": 47626.11262699189,
+      "step_time_ms": 9590.282200006186
+    },
+    {
+      "iteration": 16,
+      "compliance": 86.95859519304403,
+      "volume_fraction": 0.199350739101025,
+      "max_change": 0.1492022760235625,
+      "max_stress_mpa": 7.193534430826798,
+      "com_shift_mm": 4.412627641464795,
+      "freq1_hz": 47502.809271379374,
+      "step_time_ms": 8321.337000001222
+    },
+    {
+      "iteration": 17,
+      "compliance": 86.95499037124229,
+      "volume_fraction": 0.19960594893698194,
+      "max_change": 0.12431716135250226,
+      "max_stress_mpa": 7.204747646826251,
+      "com_shift_mm": 4.428328799564714,
+      "freq1_hz": 47462.64884949807,
+      "step_time_ms": 8945.251599994663
+    },
+    {
+      "iteration": 18,
+      "compliance": 86.94743341423812,
+      "volume_fraction": 0.1998487420437482,
+      "max_change": 0.10635680294966188,
+      "max_stress_mpa": 7.196054411765505,
+      "com_shift_mm": 4.431686669657246,
+      "freq1_hz": 47533.392940652506,
+      "step_time_ms": 9529.5707999976
+    },
+    {
+      "iteration": 19,
+      "compliance": 86.94473239112817,
+      "volume_fraction": 0.19993059222154017,
+      "max_change": 0.05151583217095801,
+      "max_stress_mpa": 7.180973050916512,
+      "com_shift_mm": 4.433297029252774,
+      "freq1_hz": 47573.49962477574,
+      "step_time_ms": 8613.403899995319
+    },
+    {
+      "iteration": 20,
+      "compliance": 86.9429659513299,
+      "volume_fraction": 0.19995181134133808,
+      "max_change": 0.05504794802346363,
+      "max_stress_mpa": 7.165000641833934,
+      "com_shift_mm": 4.435042137165869,
+      "freq1_hz": 47621.23183897904,
+      "step_time_ms": 10906.32850000111
+    },
+    {
+      "iteration": 21,
+      "compliance": 86.94158103368852,
+      "volume_fraction": 0.1999614549400097,
+      "max_change": 0.0724913522567403,
+      "max_stress_mpa": 7.160964187563318,
+      "com_shift_mm": 4.436208666426008,
+      "freq1_hz": 47651.55934034045,
+      "step_time_ms": 8268.573100001959
+    },
+    {
+      "iteration": 22,
+      "compliance": 86.94072395181647,
+      "volume_fraction": 0.19996248289991866,
+      "max_change": 0.07860757392421813,
+      "max_stress_mpa": 7.164306834539068,
+      "com_shift_mm": 4.437226499875333,
+      "freq1_hz": 47663.564017490135,
+      "step_time_ms": 8686.522699994384
+    },
+    {
+      "iteration": 23,
+      "compliance": 86.93992849817195,
+      "volume_fraction": 0.19996518961466278,
+      "max_change": 0.0691753703540462,
+      "max_stress_mpa": 7.167908918882762,
+      "com_shift_mm": 4.43796790606449,
+      "freq1_hz": 47669.76681343148,
+      "step_time_ms": 9126.69150000147
+    },
+    {
+      "iteration": 24,
+      "compliance": 86.93947970389632,
+      "volume_fraction": 0.1999728165689114,
+      "max_change": 0.052693866776686665,
+      "max_stress_mpa": 7.169129317784583,
+      "com_shift_mm": 4.43787138388312,
+      "freq1_hz": 47667.09863021515,
+      "step_time_ms": 8990.422900002159
+    },
+    {
+      "iteration": 25,
+      "compliance": 86.93901573305845,
+      "volume_fraction": 0.19997603285253213,
+      "max_change": 0.012752882181675584,
+      "max_stress_mpa": 7.1701575165198435,
+      "com_shift_mm": 4.437798902002481,
+      "freq1_hz": 47673.007329635,
+      "step_time_ms": 8771.391200003563
+    },
+    {
+      "iteration": 26,
+      "compliance": 86.93847186012172,
+      "volume_fraction": 0.19999029493722997,
+      "max_change": 0.01575776295405018,
+      "max_stress_mpa": 7.171339290537007,
+      "com_shift_mm": 4.437278391492612,
+      "freq1_hz": 47682.393273304224,
+      "step_time_ms": 8282.958700001473
+    },
+    {
+      "iteration": 27,
+      "compliance": 86.9382454313949,
+      "volume_fraction": 0.19999631325130762,
+      "max_change": 0.01663262445162572,
+      "max_stress_mpa": 7.171952041795709,
+      "com_shift_mm": 4.436393317538766,
+      "freq1_hz": 47689.25615072747,
+      "step_time_ms": 8631.898799998453
+    },
+    {
+      "iteration": 28,
+      "compliance": 86.9381547554279,
+      "volume_fraction": 0.19999638967604755,
+      "max_change": 0.02087515903341408,
+      "max_stress_mpa": 7.172322899830926,
+      "com_shift_mm": 4.435547602066162,
+      "freq1_hz": 47696.471641383185,
+      "step_time_ms": 8186.56010000268
+    },
+    {
+      "iteration": 29,
+      "compliance": 86.93806328095748,
+      "volume_fraction": 0.19999776581623863,
+      "max_change": 0.024708918964471693,
+      "max_stress_mpa": 7.172585169531994,
+      "com_shift_mm": 4.4345573356401005,
+      "freq1_hz": 47703.17077530467,
+      "step_time_ms": 8754.520300004515
+    },
+    {
+      "iteration": 30,
+      "compliance": 86.93799821758988,
+      "volume_fraction": 0.19999966104821826,
+      "max_change": 0.028126731134085425,
+      "max_stress_mpa": 7.172848337092634,
+      "com_shift_mm": 4.433433963218423,
+      "freq1_hz": 47708.84353373803,
+      "step_time_ms": 9036.244999995688
+    },
+    {
+      "iteration": 31,
+      "compliance": 86.93797466773826,
+      "volume_fraction": 0.20000141896323437,
+      "max_change": 0.02803933663510555,
+      "max_stress_mpa": 7.173121136953811,
+      "com_shift_mm": 4.432204089000763,
+      "freq1_hz": 47713.40457678218,
+      "step_time_ms": 8569.925800002238
+    },
+    {
+      "iteration": 32,
+      "compliance": 86.93800505180499,
+      "volume_fraction": 0.20000146620747025,
+      "max_change": 0.02640469869844081,
+      "max_stress_mpa": 7.173396386204496,
+      "com_shift_mm": 4.431012003385973,
+      "freq1_hz": 47717.356026039735,
+      "step_time_ms": 8851.69329999917
+    },
+    {
+      "iteration": 33,
+      "compliance": 86.93807087290676,
+      "volume_fraction": 0.20000035234909944,
+      "max_change": 0.024439861050967737,
+      "max_stress_mpa": 7.173651373219582,
+      "com_shift_mm": 4.429917600081033,
+      "freq1_hz": 47720.65404669129,
+      "step_time_ms": 8789.567500003614
+    },
+    {
+      "iteration": 34,
+      "compliance": 86.93816007083723,
+      "volume_fraction": 0.19999876493063704,
+      "max_change": 0.022253672920418355,
+      "max_stress_mpa": 7.173875562329328,
+      "com_shift_mm": 4.428934479667959,
+      "freq1_hz": 47722.99392265544,
+      "step_time_ms": 9423.484099999769
+    },
+    {
+      "iteration": 35,
+      "compliance": 86.93827011074588,
+      "volume_fraction": 0.1999969144042146,
+      "max_change": 0.01966245253207266,
+      "max_stress_mpa": 7.174065147949142,
+      "com_shift_mm": 4.428073745774803,
+      "freq1_hz": 47724.16402493454,
+      "step_time_ms": 8896.570700002485
+    },
+    {
+      "iteration": 36,
+      "compliance": 86.93838883710671,
+      "volume_fraction": 0.1999948757441286,
+      "max_change": 0.016970072476134024,
+      "max_stress_mpa": 7.174218170438649,
+      "com_shift_mm": 4.427345133658221,
+      "freq1_hz": 47724.56015459981,
+      "step_time_ms": 7965.8069999932195
+    },
+    {
+      "iteration": 37,
+      "compliance": 86.93850479503703,
+      "volume_fraction": 0.19999284098389297,
+      "max_change": 0.014245128160692178,
+      "max_stress_mpa": 7.174338821079368,
+      "com_shift_mm": 4.426744144927241,
+      "freq1_hz": 47724.489535026085,
+      "step_time_ms": 7673.229499996523
+    },
+    {
+      "iteration": 38,
+      "compliance": 86.93861905451985,
+      "volume_fraction": 0.19999077142502594,
+      "max_change": 0.011816186152681818,
+      "max_stress_mpa": 7.174426198106856,
+      "com_shift_mm": 4.42627321699462,
+      "freq1_hz": 47723.91505671819,
+      "step_time_ms": 7604.0686999986065
+    },
+    {
+      "iteration": 39,
+      "compliance": 86.93871480532104,
+      "volume_fraction": 0.19998902672832147,
+      "max_change": 0.009846476740467569,
+      "max_stress_mpa": 7.174492094457707,
+      "com_shift_mm": 4.425904755600396,
+      "freq1_hz": 47723.32794158301,
+      "step_time_ms": 7656.030599995574
+    },
+    {
+      "iteration": 40,
+      "compliance": 86.93879109107775,
+      "volume_fraction": 0.19998764030480198,
+      "max_change": 0.008288819291447647,
+      "max_stress_mpa": 7.1745432995165555,
+      "com_shift_mm": 4.42561566717384,
+      "freq1_hz": 47722.8417585533,
+      "step_time_ms": 8827.504200002295
+    },
+    {
+      "iteration": 41,
+      "compliance": 86.9388513050178,
+      "volume_fraction": 0.1999865484087648,
+      "max_change": 0.007063951355005038,
+      "max_stress_mpa": 7.174583383634204,
+      "com_shift_mm": 4.425388794273342,
+      "freq1_hz": 47722.45353523858,
+      "step_time_ms": 8285.734000004595
+    },
+    {
+      "iteration": 42,
+      "compliance": 86.93889874123343,
+      "volume_fraction": 0.19998568975502645,
+      "max_change": 0.006103868465673901,
+      "max_stress_mpa": 7.1746148068596,
+      "com_shift_mm": 4.425210776087745,
+      "freq1_hz": 47722.14527420134,
+      "step_time_ms": 8846.085299999686
+    },
+    {
+      "iteration": 43,
+      "compliance": 86.93893596282535,
+      "volume_fraction": 0.19998501727291265,
+      "max_change": 0.0053482867994843475,
+      "max_stress_mpa": 7.1746395252197805,
+      "com_shift_mm": 4.425070928370928,
+      "freq1_hz": 47721.90449740107,
+      "step_time_ms": 7952.072100000805
+    },
+    {
+      "iteration": 44,
+      "compliance": 86.93896533597272,
+      "volume_fraction": 0.19998448650151263,
+      "max_change": 0.0047522786972469255,
+      "max_stress_mpa": 7.174658862566843,
+      "com_shift_mm": 4.424961293202173,
+      "freq1_hz": 47721.711873119624,
+      "step_time_ms": 8014.694199999212
+    },
+    {
+      "iteration": 45,
+      "compliance": 86.93898851000515,
+      "volume_fraction": 0.19998406746950015,
+      "max_change": 0.004285313645290334,
+      "max_stress_mpa": 7.174673945299236,
+      "com_shift_mm": 4.424875501109366,
+      "freq1_hz": 47721.55712302172,
+      "step_time_ms": 7904.148200002965
+    },
+    {
+      "iteration": 46,
+      "compliance": 86.93900662389136,
+      "volume_fraction": 0.19998374021018067,
+      "max_change": 0.003919689332980286,
+      "max_stress_mpa": 7.174685790550249,
+      "com_shift_mm": 4.424808236448737,
+      "freq1_hz": 47721.437125622615,
+      "step_time_ms": 8209.58260000043
+    },
+    {
+      "iteration": 47,
+      "compliance": 86.93902083075162,
+      "volume_fraction": 0.19998348355702164,
+      "max_change": 0.0036328856816947586,
+      "max_stress_mpa": 7.174695076865499,
+      "com_shift_mm": 4.4247555252703705,
+      "freq1_hz": 47721.34281435198,
+      "step_time_ms": 7994.452200000524
+    },
+    {
+      "iteration": 48,
+      "compliance": 86.93903197522025,
+      "volume_fraction": 0.19998328214053315,
+      "max_change": 0.003407871168936205,
+      "max_stress_mpa": 7.174702350593211,
+      "com_shift_mm": 4.424714236394298,
+      "freq1_hz": 47721.26857367424,
+      "step_time_ms": 7756.178300005558
+    },
+    {
+      "iteration": 49,
+      "compliance": 86.93904071446211,
+      "volume_fraction": 0.19998312408192495,
+      "max_change": 0.0032313418837889296,
+      "max_stress_mpa": 7.174708044959578,
+      "com_shift_mm": 4.4246819092416025,
+      "freq1_hz": 47721.2101096064,
+      "step_time_ms": 8274.073900000076
+    },
+    {
+      "iteration": 50,
+      "compliance": 86.9390475644647,
+      "volume_fraction": 0.19998300006502603,
+      "max_change": 0.003091696514564618,
+      "max_stress_mpa": 7.174712500522936,
+      "com_shift_mm": 4.424656612297852,
+      "freq1_hz": 47721.16406139513,
+      "step_time_ms": 7794.543600000907
+    }
+  ]
+}

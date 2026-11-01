@@ -1,0 +1,49 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "wht_topopt"
+version = "3.0.0"
+description = "Next-Generation Multi-Solver, Multi-Algorithm Topology Optimization Framework (SIMP, RAMP, BESO, Hilbertian Level-Set, SEMDOT, Stress, Buckling, Manufacturing, Multiscale, MuJoCo Dynamics, Kratos & FrontISTR)"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+authors = [
+    {name = "AI Engineering Workbench Team"}
+]
+dependencies = [
+    "numpy>=1.24",
+    "scipy>=1.10",
+    "pydantic>=2.0",
+    "trimesh>=4.0",
+    "scikit-image>=0.21",
+]
+
+[project.optional-dependencies]
+amg = ["pyamg>=5.0"]
+dynamics = ["mujoco>=3.0"]
+viz = ["matplotlib>=3.7", "koreanize-matplotlib", "pyvista>=0.42", "ezdxf>=1.1"]
+dev = ["pytest>=7.4"]
+
+[tool.setuptools]
+packages = [
+    "wht_topopt",
+    "wht_topopt.core",
+    "wht_topopt.solvers",
+    "wht_topopt.algorithms",
+    "wht_topopt.functions",
+    "wht_topopt.manufacturing",
+    "wht_topopt.multiscale",
+    "wht_topopt.robust",
+    "wht_topopt.post",
+    "wht_topopt.neural",
+    "wht_topopt.pipeline",
+]
+
+[tool.setuptools.package-dir]
+wht_topopt = "."
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

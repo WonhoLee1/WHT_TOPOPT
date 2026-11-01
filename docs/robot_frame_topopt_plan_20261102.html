@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>로봇 프레임 구조 위상최적화 모듈 개발 계획서</title>
+<style>
+:root{--bg:#0f172a;--bg2:#1e293b;--card:#1e293b;--line:#334155;--txt:#e2e8f0;--mut:#94a3b8;--acc:#38bdf8;--acc2:#a78bfa;--ok:#34d399;--warn:#fbbf24}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--txt);font-family:"Malgun Gothic","Noto Sans KR",sans-serif;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+header{display:flex;align-items:center;gap:12px;padding:12px 24px;border-bottom:1px solid var(--line);background:var(--bg2)}
+header h1{font-size:17px;font-weight:700}
+header .sub{font-size:12px;color:var(--mut)}
+header .sp{flex:1}
+header .pg{font-size:13px;color:var(--acc);font-weight:700}
+main{flex:1;position:relative;overflow:hidden}
+.slide{position:absolute;inset:0;padding:44px 60px;overflow:auto;display:none}
+.slide.on{display:block;animation:fade .3s}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1}}
+.slide h2{font-size:28px;margin-bottom:6px}
+.slide h2 .no{color:var(--acc);margin-right:10px}
+.slide .kick{color:var(--acc2);font-size:13px;font-weight:700;letter-spacing:2px;margin-bottom:10px}
+.slide p.lead{color:var(--mut);font-size:15px;margin-bottom:18px;line-height:1.7}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
+.card h3{font-size:15px;color:var(--acc);margin-bottom:8px}
+.card ul{list-style:none;font-size:13.5px;line-height:1.85}
+.card ul li::before{content:"▸ ";color:var(--acc2)}
+.card ul li b{color:var(--txt)}
+table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
+th,td{border:1px solid var(--line);padding:7px 9px;text-align:left;vertical-align:top;line-height:1.65}
+th{background:#0b1220;color:var(--acc)}
+td .tag{display:inline-block;font-size:11px;background:#0b1220;border:1px solid var(--line);border-radius:6px;padding:1px 7px;color:var(--ok);margin-right:4px}
+.cover{display:flex;flex-direction:column;justify-content:center;height:100%}
+.cover .k{color:var(--acc2);letter-spacing:4px;font-size:14px;font-weight:700}
+.cover h1{font-size:50px;line-height:1.3;margin:14px 0}
+.cover h1 span{color:var(--acc)}
+.cover .meta{color:var(--mut);font-size:14px;margin-top:18px;line-height:2}
+footer{display:flex;align-items:center;gap:10px;padding:10px 24px;border-top:1px solid var(--line);background:var(--bg2)}
+footer button{background:#0b1220;color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:8px 18px;font-size:14px;cursor:pointer}
+footer button:hover{border-color:var(--acc);color:var(--acc)}
+footer .dots{flex:1;text-align:center;color:var(--mut);font-size:13px}
+.warn{color:var(--warn)}.ok{color:var(--ok)}
+code{background:#0b1220;padding:1px 6px;border-radius:5px;font-size:12px;color:var(--acc)}
+.eq{background:#0b1220;border:1px solid var(--line);border-radius:8px;padding:10px 14px;font-size:14px;margin:8px 0;color:var(--txt)}
+@media print{.slide{position:static;display:block;border-bottom:2px solid var(--line)}footer,header .pg{display:none}body{overflow:visible;height:auto}}
+</style>
+</head>
+<body>
+<header>
+<h1>로봇 프레임 구조 위상최적화 모듈 개발 계획서</h1>
+<span class="sub">wht_topopt · 내부 개발용 (기술 교류) · 2026-11-01</span><span class="sp"></span><span class="pg" id="pg"></span>
+</header>
+<main id="deck">
+
+<section class="slide on"><div class="cover">
+<div class="k">DEVELOPMENT PLAN · WHT_TOPOPT · INTERNAL</div>
+<h1>로봇 프레임<br><span>구조 위상최적화</span> 모듈 개발 계획서</h1>
+<p class="meta">핵심 메시지 — 로봇 프레임 동적 거동을 고려한 경량·고신뢰성 강성/강도 설계 기술로서의 위상최적화 기법 확보<br><br>내부 개발용 · 기술 교류 목적 · 수식 포함</p>
+</div></section>
+
+<section class="slide">
+<div class="kick">01 · BACKGROUND</div><h2><span class="no">01</span>왜 동적 고려 위상최적화인가</h2>
+<p class="lead">휴머노이드·협동로봇 암 링크는 수십 ms 급격 슬루잉 하에서 관성 하중이 지배적이다. 정적 설계는 과설계 아니면 파손으로 귀결된다.</p>
+<div class="grid3">
+<div class="card"><h3>경량화</h3><ul><li>가반하중 대비 자중 최소화</li><li>관성 모멘트 감소 → 모터 소형화</li><li>목표 체적분율 25%급</li></ul></div>
+<div class="card"><h3>고신뢰성 강성·강도</h3><ul><li>피크 von Mises + COV 평탄화</li><li>응력집중·피로 수명 보장</li><li>주조·가공 가능 형상</li></ul></div>
+<div class="card"><h3>동적 거동 반영</h3><ul><li>50ms S-curve 가감속 시간 이력</li><li>원심·오일러·비틀림 진동 중첩</li><li>정적 등가 설계와 수십 % 괴리</li></ul></div>
+</div></section>
+
+<section class="slide">
+<div class="kick">02 · RESEARCH SURVEY ①</div><h2><span class="no">02</span>최신 연구 조사 — 동적·HCA 계열</h2>
+<p class="lead">문헌 나열이 아니라 독창성·차별성·활용도·연관성, 그리고 우리의 흡수 방안으로 정리한다.</p>
+<div class="card"><h3>F-ESL — Buzaglo·Pollini 2025 (arXiv:2508.07222) [정독]</h3><ul>
+<li><b>독창성</b>: 등가하중 1차항 포함으로 수렴점의 KKT 정류성 보장 — <span class="warn">0차 ESL은 최적점 인식 불가 (Stolpe 2018 반례)</span></li>
+<li><b>차별성·활용도</b>: 외부 반복당 과도 수반 1회 추가 비용으로 정적 MMA 재사용</li>
+<li><b>흡수</b>: ex09 보정항 + <code>kkt_residual</code> 보고 + 신뢰영역·참응답 수용 판정. 한계 고지: 실증은 사이징 한정</li></ul></div>
+<div class="card" style="margin-top:12px"><h3>HCA — Tovar 2006 / Penninger 2010 [정독] / Tong 2025 [정독]</h3><ul>
+<li><b>독창성</b>: 무구배 SED 균질화, 외부 솔버 결과만으로 갱신 (Tong: 상대변위 −31.02%)</li>
+<li><b>차별성</b>: <span class="warn">수렴 ≠ 최적</span> — 불동점 다수, 이웃평균은 KKT 위반 (Penninger)</li>
+<li><b>흡수</b>: SE-AHCA 워밍업 + 적응형 PID 게인, 종료조건 KKT 연계</li></ul></div>
+</section>
+
+<section class="slide">
+<div class="kick">03 · RESEARCH SURVEY ②</div><h2><span class="no">03</span>최신 연구 조사 — 응력·옵티마이저·수반해석</h2>
+<div class="grid2">
+<div class="card"><h3>응력 — Le 2010 qp-완화 [초록]</h3><ul><li><b>독창성</b>: SIMP-motivated 응력 정의로 특이점 해소</li><li><b>흡수</b>: SE-AHCA 기술1 완화식 + P-norm 집계</li></ul></div>
+<div class="card"><h3>옵티마이저 — MMA/GCMMA·BESO·Level-Set</h3><ul><li><b>흡수</b>: <code>algorithms</code> 래퍼 + 이동제한·점근선 관리</li></ul></div>
+<div class="card"><h3>과도 수반 — Behrou·Guest, Gen-α/Newmark</h3><ul><li><b>흡수</b>: <code>dynamics</code> 시간역행 exact adjoint (비용≈전진 1회)</li></ul></div>
+<div class="card"><h3>자산 관리</h3><ul><li><code>wht_topopt/docs/references/</code> 55편</li><li>[정독]/[초록]/[미확보] 근거 라벨 의무</li></ul></div>
+</div></section>
+
+<section class="slide">
+<div class="kick">04 · CONSIDERATIONS</div><h2><span class="no">04</span>로봇 프레임 최적화 고려사항 총괄</h2>
+<div class="grid2">
+<div class="card"><h3>① 동적 하중 프로파일</h3><ul><li>S-curve 각속도·각가속도 시간 이력, 편심 3축 연성</li></ul></div>
+<div class="card"><h3>② 회전 관성 저항</h3><ul><li>원심·오일러·편심 토크, 질량분포가 하중을 바꿈</li></ul></div>
+<div class="card"><h3>③ 강성-강도 동시 만족</h3><ul><li>컴플라이언스 + 피크응력 + COV, qp-완화 필수</li></ul></div>
+<div class="card"><h3>④ 제조 가능성 + ⑤ 수치 무결성 + ⑥ 허브 인터페이스</h3><ul><li>필터·제약 연산자 / KKT·해상도 / passive 영역·RBE3 분배</li></ul></div>
+</div></section>
+
+<section class="slide">
+<div class="kick">05 · LOAD CASES</div><h2><span class="no">05</span>Loadcase 정의 기술</h2>
+<p class="lead">시간 이력 수백 스텝을 그대로 풀지 않는다. 피크 물리량을 보존하는 소수 대표 하중으로 압축한다.</p>
+<div class="eq">f<sub>eq,k</sub> = K(x)·u<sub>k</sub> &nbsp;&nbsp;·&nbsp;&nbsp; 대표 스텝: 피크 SE / 피크 팁변위 / 최대 가속·감속 충격 &nbsp;&nbsp;·&nbsp;&nbsp; w<sub>k</sub> ∝ SE(t<sub>k</sub>)·Δt</div>
+<div class="grid2">
+<div class="card"><h3>추출·병합 규칙</h3><ul><li>유사 하중 병합 (코사인 유사도 ≥ 0.95)</li><li>filler 스텝의 가중치 오배정 금지</li><li>적분형 가중으로 이중 계수 방지</li></ul></div>
+<div class="card"><h3>ESL 부분문제</h3><ul><li>다중 정하중 문제로 기존 MMA 재사용</li><li>1차 보정(F-ESL)으로 KKT 정류성 확보</li><li>매 반복 참 동적응답 재평가·수용 판정</li></ul></div>
+</div></section>
+
+<section class="slide">
+<div class="kick">06 · ROTATIONAL INERTIA</div><h2><span class="no">06</span>축 회전 저항 · 관성 고려 기술</h2>
+<p class="lead">로봇 암 하중의 1차 성분은 관성이다. 질량 보간이 틀리면 하중 자체가 틀린다.</p>
+<table><tr><th>성분</th><th>수식</th><th>모듈 반영</th></tr>
+<tr><td>원심 인장</td><td>F<sub>x</sub> = m·ω²·L</td><td>S-curve ω(t) 시간 이력 가진</td></tr>
+<tr><td>오일러 접선력</td><td>F<sub>y</sub> = −m·α·L</td><td>가감속 반전 하중 케이스</td></tr>
+<tr><td>편심 토크 우력</td><td>F<sub>i</sub> = T×r<sub>i</sub>/Σr²</td><td>허브 링 분배 + ΣF/ΣM assert</td></tr>
+<tr><td>회전 관성 지표</td><td>I<sub>zz</sub> = Σρ·m·r²</td><td>정적 vs 동적 설계 교차 비교</td></tr>
+<tr><td>질량 보간</td><td>Du·Olhoff 절단형, q &gt; 1</td><td>선형 보간 금지 — 강성/질량비 10<sup>−6</sup> 붕괴, 보이드 스퓨리어스 모드</td></tr></table>
+</section>
+
+<section class="slide">
+<div class="kick">07 · FILTERING</div><h2><span class="no">07</span>제조 가능 형상 필터링 기술</h2>
+<div class="grid3">
+<div class="card"><h3>밀도·민감도 필터</h3><ul><li>KD-Tree 거리 가중 콘 필터</li><li>Helmholtz PDE 필터</li><li>체커보드·메시 의존성 제거</li></ul></div>
+<div class="card"><h3>투영·이산화</h3><ul><li>Heaviside 투영 (흑백 유도)</li><li>SIMP 연속화 p: 1→3</li><li>수동 임계값 금지</li></ul></div>
+<div class="card"><h3>제조 제약 연산자</h3><ul><li>주조 탈형 구배 · 압출 방향</li><li>AM 오버행 각도</li><li>대칭·패턴 링크 변수</li></ul></div>
+</div></section>
+
+<section class="slide">
+<div class="kick">08 · ROBUSTNESS</div><h2><span class="no">08</span>그 외 고려사항</h2>
+<div class="grid2">
+<div class="card"><h3>시간 해상도·정합성</h3><ul><li>ωΔt ≤ 0.5 판정 리포트</li><li>정합 초기 가속도 a₀ = M⁻¹f₀</li><li>최적화↔평가 감쇠계 통일</li></ul></div>
+<div class="card"><h3>모달·허브</h3><ul><li>shift-invert 스케일·MAC 모드 식별</li><li>보어 passive void / 칼라 passive solid</li><li>RBE3 철학 하중 분배</li></ul></div>
+<div class="card"><h3>수치 무결성</h3><ul><li>0차 ESL KKT 미보장 → 1차항+신뢰영역</li><li>HCA 수렴 ≠ 최적 — 잔차 보고</li></ul></div>
+<div class="card"><h3>검증 규율</h3><ul><li>단위 테스트 + 보 이론해 대조</li><li>난수·더미 금지, 실측 로그</li></ul></div>
+</div></section>
+
+<section class="slide">
+<div class="kick">09 · MODULE DESIGN</div><h2><span class="no">09</span>wht_topopt 설계 — 고려사항 매핑</h2>
+<table><tr><th>모듈</th><th>역할</th><th>대응 고려사항</th></tr>
+<tr><td><code>core</code> (mesh·fem·filter)</td><td>Hex8 강성/질량 조립, 필터 파이프라인</td><td>§07 제조 필터, §06 질량 보간</td></tr>
+<tr><td><code>dynamics</code> (hca·transient)</td><td>SE-AHCA, Newmark 과도 + exact 수반</td><td>§05 loadcase·관성, §04 강도</td></tr>
+<tr><td><code>algorithms</code> (MMA·OC·BESO…)</td><td>Svanberg MMA + 신뢰영역</td><td>§08 KKT·수렴 보장</td></tr>
+<tr><td><code>examples/ex09</code></td><td>로봇 암 F-ESL 실증 + 정적/동적 교차평가</td><td>§04–§06 통합 검증</td></tr></table>
+</section>
+
+<section class="slide">
+<div class="kick">10 · SOLVER STRATEGY</div><h2><span class="no">10</span>자체 솔버 + 오픈소스 어댑터 (부전략)</h2>
+<p class="lead">검증의 주도권이 외부 라이선스에 묶여서는 안 된다.</p>
+<div class="grid2">
+<div class="card"><h3>자체 해석 솔버 (1차 경로)</h3><ul><li>Hex8 유한요소 + PARDISO 직접해</li><li>Generalized-α / Newmark 과도 내장</li><li>라이선스·비용·재현성 통제</li></ul></div>
+<div class="card"><h3>오픈소스 어댑터 (교차 검증)</h3><ul><li>CalculiX · FrontISTR · Kratos · OpenRadioss</li><li>결과 파서 → 동일 최적화 루프</li><li>듀얼 솔버 상호 오차 정량 보고</li></ul></div>
+</div></section>
+
+<section class="slide">
+<div class="kick">11 · ROADMAP & OUTCOMES</div><h2><span class="no">11</span>향후 계획(안) + 기대효과</h2>
+<div class="grid2">
+<div class="card"><h3>향후 계획(안)</h3><ul><li>M1 코어·필터 확정</li><li>M2 동역학·SE-AHCA</li><li>M3 ex09 실증·교차평가</li><li>M4 어댑터 확대·리포트 자동화</li></ul></div>
+<div class="card"><h3>기대효과</h3><ul><li>상대변위 <span class="ok">−30%급</span> (HCA 실증 준용)</li><li>피크응력 −15~40% + COV 평탄화</li><li>체적 25%급 경량 + 문헌-코드 직결 자산</li></ul></div>
+</div>
+<p class="lead" style="margin-top:14px">핵심 문헌: Buzaglo·Pollini 2025 / Tovar 2006·Penninger 2010·Tong 2025 / Le 2010 / Chung·Hulbert 1993 / Svanberg 1987·2002 — 전체 55편 <code>wht_topopt/docs/references/INDEX.md</code></p>
+</section>
+
+</main>
+<footer>
+<button onclick="go(-1)">◀ 이전</button>
+<button onclick="go(1)">다음 ▶</button>
+<span class="dots" id="dots"></span>
+<button onclick="window.print()">인쇄 / PDF</button>
+</footer>
+<script>
+let i=0;const S=document.querySelectorAll('.slide');
+function show(){S.forEach((s,k)=>s.classList.toggle('on',k===i));
+document.getElementById('pg').textContent=(i+1)+' / '+S.length;
+document.getElementById('dots').textContent='슬라이드 '+(i+1)+' of '+S.length;}
+function go(d){i=Math.min(S.length-1,Math.max(0,i+d));show();}
+document.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key===' ')go(1);if(e.key==='ArrowLeft')go(-1);});
+show();
+</script>
+</body>
+</html>

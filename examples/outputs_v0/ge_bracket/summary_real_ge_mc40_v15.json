@@ -1,0 +1,98 @@
+[
+  {
+    "algo": "beso",
+    "volfrac": 0.15,
+    "mesh_control": 40,
+    "iterations": 112,
+    "converged": true,
+    "wall_sec": 303.0,
+    "mass_g": 244.5,
+    "weighted_compliance_Nmm": 84333.9,
+    "compliance_per_case_Nmm": [
+      30029.9,
+      31141.6,
+      14654.2,
+      8508.2
+    ],
+    "vm_max_per_case_MPa": [
+      761.9,
+      593.6,
+      504.6,
+      436.9
+    ],
+    "vm_p995_per_case_MPa": [
+      595.6,
+      547.8,
+      372.3,
+      362.7
+    ],
+    "worst_vm_max_MPa": 761.9,
+    "worst_vm_p995_MPa": 595.6,
+    "passes_yield_max": true,
+    "passes_yield_p995": true
+  },
+  {
+    "algo": "oc",
+    "volfrac": 0.15,
+    "mesh_control": 40,
+    "iterations": 100,
+    "converged": false,
+    "wall_sec": 351.59,
+    "mass_g": 244.13,
+    "weighted_compliance_Nmm": 96588.66,
+    "compliance_per_case_Nmm": [
+      36346.7,
+      29285.3,
+      21075.5,
+      9881.2
+    ],
+    "vm_max_per_case_MPa": [
+      1023.9,
+      807.2,
+      710.0,
+      393.6
+    ],
+    "vm_p995_per_case_MPa": [
+      715.2,
+      560.9,
+      544.1,
+      342.5
+    ],
+    "worst_vm_max_MPa": 1023.9,
+    "worst_vm_p995_MPa": 715.2,
+    "passes_yield_max": false,
+    "passes_yield_p995": true
+  },
+  {
+    "algo": "am",
+    "volfrac": 0.15,
+    "mesh_control": 40,
+    "iterations": 100,
+    "converged": false,
+    "wall_sec": 293.92,
+    "mass_g": 244.13,
+    "weighted_compliance_Nmm": 137044.38,
+    "compliance_per_case_Nmm": [
+      40394.0,
+      60017.8,
+      25064.7,
+      11567.9
+    ],
+    "vm_max_per_case_MPa": [
+      1043.4,
+      1441.5,
+      920.5,
+      552.5
+    ],
+    "vm_p995_per_case_MPa": [
+      737.7,
+      1045.5,
+      626.2,
+      451.6
+    ],
+    "worst_vm_max_MPa": 1441.5,
+    "worst_vm_p995_MPa": 1045.5,
+    "passes_yield_max": false,
+    "passes_yield_p995": false
+  }
+]

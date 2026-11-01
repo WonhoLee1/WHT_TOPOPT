@@ -1,0 +1,87 @@
+{
+  "metadata": {
+    "date": "2026-11-01",
+    "domain": "Robot Arm Link (160 x 48 x 40 mm)",
+    "elements": 24000,
+    "dofs": 80325,
+    "material": "Al 7075-T6 (E=71,000 MPa, nu=0.33, rho=2.81 g/cm^3)",
+    "target_volume": 0.25
+  },
+  "static_evaluation": {
+    "case_names": [
+      "Case 1: Peak Tension & Upward Shear",
+      "Case 2: Peak Accel Slewing & Torsion (+)",
+      "Case 3: Peak Decel Impact & Torsion (-)",
+      "Case 4: Peak Compression & Downward Shear"
+    ],
+    "static_model": {
+      "volume_fraction": 0.24975818120613638,
+      "weighted_compliance_mJ": 185090.55097275038,
+      "compliance_per_case_mJ": [
+        78719.13524629828,
+        299910.08271462255,
+        299910.08271462255,
+        61822.903215458195
+      ],
+      "tip_disp_per_case_mm": [
+        0.20527977254666657,
+        0.23177186088475069,
+        0.23177186088475069,
+        0.19372420345258745
+      ]
+    },
+    "dynamic_model": {
+      "volume_fraction": 0.2575407631780312,
+      "weighted_compliance_mJ": 347775.9090705811,
+      "compliance_per_case_mJ": [
+        76634.14138670797,
+        622294.220030645,
+        622294.220030645,
+        69881.05483432615
+      ],
+      "tip_disp_per_case_mm": [
+        0.259382125290085,
+        0.2938714755082162,
+        0.2938714755082162,
+        0.257479205709474
+      ]
+    },
+    "compliance_diff_pct": 87.89500989803729
+  },
+  "dynamic_evaluation": {
+    "rotational_inertia_Izz_kg_m2": {
+      "static": 0.0012455204150665807,
+      "dynamic": 0.0012197602052655219,
+      "reduction_pct": 2.0682286287279963
+    },
+    "natural_frequencies_Hz": {
+      "static": [
+        577.6210102086758,
+        703.3835345433786,
+        1854.3796466664107,
+        1914.129939813486
+      ],
+      "dynamic": [
+        569.6921147017987,
+        950.7338813301493,
+        1541.3629724868936,
+        2558.524759349728
+      ],
+      "f1_shift_pct": -1.3726812852622248
+    },
+    "peak_tip_deflection_mm": {
+      "uy_static": 4.062235111460299,
+      "uy_dynamic": 0.496163447183661,
+      "uz_static": 0.9974057901359469,
+      "uz_dynamic": 6.281037391554454
+    },
+    "residual_vibration_rms_mm": {
+      "uy_static": 2.0134352355220244,
+      "uy_dynamic": 0.24174289392687578,
+      "uy_reduction_pct": 87.9935103119878,
+      "uz_static": 0.47951273235659503,
+      "uz_dynamic": 3.113653537661048,
+      "uz_reduction_pct": -549.3369888956465
+    }
+  }
+}

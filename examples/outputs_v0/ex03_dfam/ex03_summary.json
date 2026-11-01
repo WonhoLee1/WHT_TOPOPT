@@ -1,0 +1,25 @@
+{
+  "showcase": "ex03_cantilever_3d_dfam_cnc",
+  "variants": {
+    "baseline": {
+      "final_compliance": 772.0305927904186,
+      "final_volume_fraction": 0.4388964697746197,
+      "iterations": 10
+    },
+    "overhang": {
+      "final_compliance": 759.387991823408,
+      "final_volume_fraction": 0.44221528026383805,
+      "iterations": 10
+    },
+    "milling": {
+      "final_compliance": 766.370622796094,
+      "final_volume_fraction": 0.4419566843579502,
+      "iterations": 10
+    },
+    "casting": {
+      "final_compliance": 831.5882065493007,
+      "final_volume_fraction": 0.43479220003314545,
+      "iterations": 10
+    }
+  }
+}

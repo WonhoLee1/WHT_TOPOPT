@@ -1,0 +1,8 @@
+{
+  "showcase": "ex01_lbracket_stress_mma",
+  "nelx": 20,
+  "nely": 20,
+  "peak_vm_compliance_only": 54.829863577884026,
+  "peak_vm_stress_constrained": 40.57612802951594,
+  "stress_reduction_pct": 25.99629949492965
+}
