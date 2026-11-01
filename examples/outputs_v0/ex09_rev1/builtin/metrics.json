@@ -1,0 +1,9 @@
+{
+  "solver": "builtin",
+  "final_compliance": 17784.86172315883,
+  "final_volume": 0.249363148418473,
+  "peak_stress_mpa": 214.92760304428145,
+  "peak_dyn_disp_mm": 10.020630604963435,
+  "avg_dyn_time_s": 10.749195340000297,
+  "avg_total_time_s": 14.481246872000048
+}

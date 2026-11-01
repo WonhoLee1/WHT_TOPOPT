@@ -1,0 +1,35 @@
+[
+  {
+    "mass_g": 235.11484072287382,
+    "compliance_per_case_Nmm": [
+      4294833600.7290335,
+      10486448687.023756,
+      2800930496.4853516,
+      900000750.711852
+    ],
+    "weighted_compliance_Nmm": 5823634975.081732,
+    "vm_max_per_case_MPa": [
+      923.8059046193746,
+      1446.5345352678419,
+      825.7637831108121,
+      602.1849444159342
+    ],
+    "vm_p995_per_case_MPa": [
+      685.0178950143288,
+      1233.6592541195603,
+      655.7200546767883,
+      476.91742599781537
+    ],
+    "worst_vm_max_MPa": 1446.5345352678419,
+    "worst_vm_p995_MPa": 1233.6592541195603,
+    "passes_yield_max": false,
+    "passes_yield_p995": false,
+    "algo": "semdot",
+    "name": "SEMDOT (Fu & Rolfe 2020)",
+    "volfrac": 0.15,
+    "mesh_control": 60,
+    "iterations": 40,
+    "converged": false,
+    "wall_sec": 251.08
+  }
+]

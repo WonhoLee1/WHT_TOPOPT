@@ -1,0 +1,85 @@
+{
+  "benchmark_name": "ex04_metamaterial_homogenization_3d",
+  "resolution_ruc": [
+    24,
+    24,
+    24
+  ],
+  "total_elements_ruc": 13824,
+  "objective_type": "bulk_modulus",
+  "ext_axis": null,
+  "effective_elastic_tensor_EH": [
+    [
+      0.06679493347555245,
+      0.02726872678380095,
+      0.027268726783800754,
+      6.653952549846474e-16,
+      2.00070029174413e-16,
+      5.649489529619897e-16
+    ],
+    [
+      0.02726872678380095,
+      0.06679493347555238,
+      0.027268726783800573,
+      6.054456775795566e-16,
+      4.1000460405254957e-16,
+      9.283162141062931e-17
+    ],
+    [
+      0.027268726783800754,
+      0.027268726783800573,
+      0.06679493347555249,
+      1.7479472484702228e-16,
+      6.090641229208882e-16,
+      6.577244716747532e-16
+    ],
+    [
+      6.653952549846474e-16,
+      6.054456775795566e-16,
+      1.7479472484702228e-16,
+      0.01937764363527381,
+      3.235927644631688e-16,
+      3.150522106653425e-16
+    ],
+    [
+      2.00070029174413e-16,
+      4.1000460405254957e-16,
+      6.090641229208882e-16,
+      3.235927644631688e-16,
+      0.01937764363527378,
+      4.2177725028864107e-16
+    ],
+    [
+      5.649489529619897e-16,
+      9.283162141062931e-17,
+      6.577244716747532e-16,
+      3.150522106653425e-16,
+      4.2177725028864107e-16,
+      0.01937764363527384
+    ]
+  ],
+  "bulk_modulus_KH": 0.04044412901438465,
+  "shear_modulus_GH": 0.01937764363527381,
+  "poissons_ratio_nu_xy": 0.4082454366659648,
+  "volume_fraction": 0.36191509699440316,
+  "timing_profile": {
+    "t_homog_sec": 617.2276063000027,
+    "t_opt_sec": 0.3885815999965416,
+    "t_dehomog_sec": 96.93630960000155,
+    "t_total_sec": 742.9700059999959,
+    "avg_step_ms": 41174.412526666616
+  },
+  "artifacts": {
+    "stl_unit_cell": "wht_topopt\\examples\\outputs_v1\\metamaterial\\metamaterial_unit_cell_3d.stl",
+    "stl_tiled_3x3": "wht_topopt\\examples\\outputs_v1\\metamaterial\\metamaterial_tiled_3x3_3d.stl",
+    "stl_multiscale_beam": "wht_topopt\\examples\\outputs_v1\\metamaterial\\metamaterial_multiscale_beam_3d.stl",
+    "progression_gif": "wht_topopt\\examples\\outputs_v1\\metamaterial\\metamaterial_progression.gif",
+    "master_report_html": "wht_topopt\\examples\\outputs_v1\\metamaterial\\metamaterial_comprehensive_master_report.html",
+    "png_figures": {
+      "unit_cell_png": "wht_topopt\\examples\\outputs_v1\\metamaterial\\metamaterial_unit_cell_3d.png",
+      "tiled_png": "wht_topopt\\examples\\outputs_v1\\metamaterial\\metamaterial_tiled_3x3_3d.png",
+      "multiscale_beam_png": "wht_topopt\\examples\\outputs_v1\\metamaterial\\metamaterial_multiscale_beam_3d.png",
+      "convergence_png": "wht_topopt\\examples\\outputs_v1\\metamaterial\\metamaterial_convergence.png"
+    }
+  }
+}

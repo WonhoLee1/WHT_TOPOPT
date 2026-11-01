@@ -1,0 +1,19 @@
+<mujoco model="industrial_robot_arm_2dof">
+  <option timestep="0.002" gravity="0 0 -9.81" />
+  <worldbody>
+    <body name="link1" pos="0 0 1.0">
+      <joint name="shoulder_pitch" type="hinge" axis="0 1 0" damping="0.1" />
+      <inertial pos="0.202024 0.05 0.0500928" mass="1.44876" fullinertia="0.0024123 0.0205265 0.0205286 -1.43996e-19 3.09556e-07 2.37169e-20" />
+      <geom type="box" pos="0.20 0 0" size="0.20 0.05 0.05" />
+      <body name="link2" pos="0.40 0 0">
+        <joint name="elbow_pitch" type="hinge" axis="0 1 0" damping="0.05" />
+        <inertial pos="0.15 0 0" mass="1.2" fullinertia="0.005 0.025 0.025 0 0 0" />
+        <geom type="cylinder" fromto="0 0 0 0.30 0 0" size="0.03" />
+      </body>
+    </body>
+  </worldbody>
+  <actuator>
+    <motor joint="shoulder_pitch" ctrlrange="-30 30" gear="1" />
+    <motor joint="elbow_pitch" ctrlrange="-15 15" gear="1" />
+  </actuator>
+</mujoco>

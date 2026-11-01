@@ -1,0 +1,10 @@
+{
+  "solver": "builtin",
+  "extrusion_axis": "y",
+  "final_compliance": 418760.369878151,
+  "final_volume": 0.24999857418646462,
+  "peak_stress_mpa": 588.0188007362126,
+  "peak_dyn_disp_mm": 44.289679041163375,
+  "avg_dyn_time_s": 12.09152705600005,
+  "avg_total_time_s": 16.33556442800007
+}

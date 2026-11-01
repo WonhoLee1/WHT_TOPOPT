@@ -1,0 +1,507 @@
+{
+  "target_vol": 0.25,
+  "is_watertight": true,
+  "stl_volume": 98901.8,
+  "records": [
+    {
+      "iteration": 1,
+      "compliance": 97.2555,
+      "volume_fraction": 0.204,
+      "max_change": 0.1498,
+      "max_stress_mpa": 41.15,
+      "com_shift_mm": 5.976,
+      "freq1_hz": 10732.2,
+      "step_time_ms": 5500.0
+    },
+    {
+      "iteration": 2,
+      "compliance": 88.8092,
+      "volume_fraction": 0.22899999999999998,
+      "max_change": 0.1498,
+      "max_stress_mpa": 14.37,
+      "com_shift_mm": 5.447,
+      "freq1_hz": 29653.4,
+      "step_time_ms": 5500.0
+    },
+    {
+      "iteration": 3,
+      "compliance": 87.0099,
+      "volume_fraction": 0.237,
+      "max_change": 0.1498,
+      "max_stress_mpa": 7.52,
+      "com_shift_mm": 4.619,
+      "freq1_hz": 48291.1,
+      "step_time_ms": 5500.0
+    },
+    {
+      "iteration": 4,
+      "compliance": 86.34,
+      "volume_fraction": 0.242,
+      "max_change": 0.1498,
+      "max_stress_mpa": 4.53,
+      "com_shift_mm": 4.194,
+      "freq1_hz": 60700.4,
+      "step_time_ms": 5500.0
+    },
+    {
+      "iteration": 5,
+      "compliance": 86.0003,
+      "volume_fraction": 0.244,
+      "max_change": 0.1498,
+      "max_stress_mpa": 3.53,
+      "com_shift_mm": 4.01,
+      "freq1_hz": 68244.5,
+      "step_time_ms": 5500.0
+    },
+    {
+      "iteration": 6,
+      "compliance": 85.7884,
+      "volume_fraction": 0.245,
+      "max_change": 0.1496,
+      "max_stress_mpa": 3.53,
+      "com_shift_mm": 4.046,
+      "freq1_hz": 73054.5,
+      "step_time_ms": 5500.0
+    },
+    {
+      "iteration": 7,
+      "compliance": 85.7016,
+      "volume_fraction": 0.247,
+      "max_change": 0.1496,
+      "max_stress_mpa": 3.5,
+      "com_shift_mm": 4.033,
+      "freq1_hz": 74685.2,
+      "step_time_ms": 5500.0
+    },
+    {
+      "iteration": 8,
+      "compliance": 85.663,
+      "volume_fraction": 0.248,
+      "max_change": 0.1495,
+      "max_stress_mpa": 3.47,
+      "com_shift_mm": 4.075,
+      "freq1_hz": 75347.5,
+      "step_time_ms": 5500.0
+    },
+    {
+      "iteration": 9,
+      "compliance": 85.6439,
+      "volume_fraction": 0.249,
+      "max_change": 0.1492,
+      "max_stress_mpa": 3.45,
+      "com_shift_mm": 4.11,
+      "freq1_hz": 75646.7,
+      "step_time_ms": 5500.0
+    },
+    {
+      "iteration": 10,
+      "compliance": 85.6344,
+      "volume_fraction": 0.249,
+      "max_change": 0.1492,
+      "max_stress_mpa": 3.45,
+      "com_shift_mm": 4.128,
+      "freq1_hz": 75766.9,
+      "step_time_ms": 5500.0
+    },
+    {
+      "iteration": 11,
+      "compliance": 85.6288,
+      "volume_fraction": 0.249,
+      "max_change": 0.1486,
+      "max_stress_mpa": 3.44,
+      "com_shift_mm": 4.148,
+      "freq1_hz": 75835.1,
+      "step_time_ms": 5500.0
+    },
+    {
+      "iteration": 12,
+      "compliance": 85.6245,
+      "volume_fraction": 0.25,
+      "max_change": 0.1441,
+      "max_stress_mpa": 3.43,
+      "com_shift_mm": 4.176,
+      "freq1_hz": 75893.8,
+      "step_time_ms": 5500.0
+    },
+    {
+      "iteration": 13,
+      "compliance": 85.6212,
+      "volume_fraction": 0.25,
+      "max_change": 0.1462,
+      "max_stress_mpa": 3.42,
+      "com_shift_mm": 4.208,
+      "freq1_hz": 75943.4,
+      "step_time_ms": 5500.0
+    },
+    {
+      "iteration": 14,
+      "compliance": 85.6187,
+      "volume_fraction": 0.25,
+      "max_change": 0.1473,
+      "max_stress_mpa": 3.41,
+      "com_shift_mm": 4.238,
+      "freq1_hz": 75978.4,
+      "step_time_ms": 5500.0
+    },
+    {
+      "iteration": 15,
+      "compliance": 85.617,
+      "volume_fraction": 0.25,
+      "max_change": 0.1445,
+      "max_stress_mpa": 3.41,
+      "com_shift_mm": 4.269,
+      "freq1_hz": 76004.1,
+      "step_time_ms": 5500.0
+    },
+    {
+      "iteration": 16,
+      "compliance": 85.6158,
+      "volume_fraction": 0.25,
+      "max_change": 0.1445,
+      "max_stress_mpa": 3.41,
+      "com_shift_mm": 4.299,
+      "freq1_hz": 76023.2,
+      "step_time_ms": 5500.0
+    },
+    {
+      "iteration": 17,
+      "compliance": 85.6148,
+      "volume_fraction": 0.25,
+      "max_change": 0.1456,
+      "max_stress_mpa": 3.41,
+      "com_shift_mm": 4.325,
+      "freq1_hz": 76034.8,
+      "step_time_ms": 5500.0
+    },
+    {
+      "iteration": 18,
+      "compliance": 85.614,
+      "volume_fraction": 0.25,
+      "max_change": 0.1462,
+      "max_stress_mpa": 3.41,
+      "com_shift_mm": 4.348,
+      "freq1_hz": 76042.2,
+      "step_time_ms": 5500.0
+    },
+    {
+      "iteration": 19,
+      "compliance": 85.6132,
+      "volume_fraction": 0.25,
+      "max_change": 0.1462,
+      "max_stress_mpa": 3.41,
+      "com_shift_mm": 4.369,
+      "freq1_hz": 76047.1,
+      "step_time_ms": 5500.0
+    },
+    {
+      "iteration": 20,
+      "compliance": 85.6124,
+      "volume_fraction": 0.25,
+      "max_change": 0.1463,
+      "max_stress_mpa": 3.41,
+      "com_shift_mm": 4.391,
+      "freq1_hz": 76050.2,
+      "step_time_ms": 5500.0
+    },
+    {
+      "iteration": 21,
+      "compliance": 85.6115,
+      "volume_fraction": 0.25,
+      "max_change": 0.1439,
+      "max_stress_mpa": 3.4,
+      "com_shift_mm": 4.409,
+      "freq1_hz": 76050.2,
+      "step_time_ms": 5500.0
+    },
+    {
+      "iteration": 22,
+      "compliance": 85.6108,
+      "volume_fraction": 0.25,
+      "max_change": 0.1459,
+      "max_stress_mpa": 3.41,
+      "com_shift_mm": 4.426,
+      "freq1_hz": 76047.8,
+      "step_time_ms": 5500.0
+    },
+    {
+      "iteration": 23,
+      "compliance": 85.6102,
+      "volume_fraction": 0.25,
+      "max_change": 0.1442,
+      "max_stress_mpa": 3.4,
+      "com_shift_mm": 4.443,
+      "freq1_hz": 76047.3,
+      "step_time_ms": 5500.0
+    },
+    {
+      "iteration": 24,
+      "compliance": 85.6097,
+      "volume_fraction": 0.25,
+      "max_change": 0.1453,
+      "max_stress_mpa": 3.4,
+      "com_shift_mm": 4.457,
+      "freq1_hz": 76045.2,
+      "step_time_ms": 5500.0
+    },
+    {
+      "iteration": 25,
+      "compliance": 85.6093,
+      "volume_fraction": 0.25,
+      "max_change": 0.1457,
+      "max_stress_mpa": 3.41,
+      "com_shift_mm": 4.472,
+      "freq1_hz": 76042.9,
+      "step_time_ms": 5500.0
+    },
+    {
+      "iteration": 26,
+      "compliance": 85.6089,
+      "volume_fraction": 0.25,
+      "max_change": 0.1406,
+      "max_stress_mpa": 3.4,
+      "com_shift_mm": 4.487,
+      "freq1_hz": 76040.8,
+      "step_time_ms": 5500.0
+    },
+    {
+      "iteration": 27,
+      "compliance": 85.6085,
+      "volume_fraction": 0.25,
+      "max_change": 0.1435,
+      "max_stress_mpa": 3.4,
+      "com_shift_mm": 4.499,
+      "freq1_hz": 76040.9,
+      "step_time_ms": 5500.0
+    },
+    {
+      "iteration": 28,
+      "compliance": 85.6081,
+      "volume_fraction": 0.25,
+      "max_change": 0.1442,
+      "max_stress_mpa": 3.4,
+      "com_shift_mm": 4.508,
+      "freq1_hz": 76040.4,
+      "step_time_ms": 5500.0
+    },
+    {
+      "iteration": 29,
+      "compliance": 85.6079,
+      "volume_fraction": 0.25,
+      "max_change": 0.1439,
+      "max_stress_mpa": 3.4,
+      "com_shift_mm": 4.515,
+      "freq1_hz": 76039.7,
+      "step_time_ms": 5500.0
+    },
+    {
+      "iteration": 30,
+      "compliance": 85.6077,
+      "volume_fraction": 0.25,
+      "max_change": 0.1407,
+      "max_stress_mpa": 3.4,
+      "com_shift_mm": 4.521,
+      "freq1_hz": 76042.2,
+      "step_time_ms": 5500.0
+    },
+    {
+      "iteration": 31,
+      "compliance": 85.6075,
+      "volume_fraction": 0.25,
+      "max_change": 0.1325,
+      "max_stress_mpa": 3.4,
+      "com_shift_mm": 4.527,
+      "freq1_hz": 76044.8,
+      "step_time_ms": 5500.0
+    },
+    {
+      "iteration": 32,
+      "compliance": 85.6074,
+      "volume_fraction": 0.25,
+      "max_change": 0.1332,
+      "max_stress_mpa": 3.4,
+      "com_shift_mm": 4.531,
+      "freq1_hz": 76045.1,
+      "step_time_ms": 5500.0
+    },
+    {
+      "iteration": 33,
+      "compliance": 85.6073,
+      "volume_fraction": 0.25,
+      "max_change": 0.1351,
+      "max_stress_mpa": 3.4,
+      "com_shift_mm": 4.536,
+      "freq1_hz": 76044.1,
+      "step_time_ms": 5500.0
+    },
+    {
+      "iteration": 34,
+      "compliance": 85.6073,
+      "volume_fraction": 0.25,
+      "max_change": 0.107,
+      "max_stress_mpa": 3.4,
+      "com_shift_mm": 4.54,
+      "freq1_hz": 76042.8,
+      "step_time_ms": 5500.0
+    },
+    {
+      "iteration": 35,
+      "compliance": 85.6072,
+      "volume_fraction": 0.25,
+      "max_change": 0.1152,
+      "max_stress_mpa": 3.4,
+      "com_shift_mm": 4.543,
+      "freq1_hz": 76041.9,
+      "step_time_ms": 5500.0
+    },
+    {
+      "iteration": 36,
+      "compliance": 85.6071,
+      "volume_fraction": 0.25,
+      "max_change": 0.1162,
+      "max_stress_mpa": 3.4,
+      "com_shift_mm": 4.545,
+      "freq1_hz": 76041.0,
+      "step_time_ms": 5500.0
+    },
+    {
+      "iteration": 37,
+      "compliance": 85.607,
+      "volume_fraction": 0.25,
+      "max_change": 0.1167,
+      "max_stress_mpa": 3.4,
+      "com_shift_mm": 4.547,
+      "freq1_hz": 76040.4,
+      "step_time_ms": 5500.0
+    },
+    {
+      "iteration": 38,
+      "compliance": 85.607,
+      "volume_fraction": 0.25,
+      "max_change": 0.1173,
+      "max_stress_mpa": 3.4,
+      "com_shift_mm": 4.549,
+      "freq1_hz": 76039.9,
+      "step_time_ms": 5500.0
+    },
+    {
+      "iteration": 39,
+      "compliance": 85.6069,
+      "volume_fraction": 0.25,
+      "max_change": 0.0888,
+      "max_stress_mpa": 3.4,
+      "com_shift_mm": 4.552,
+      "freq1_hz": 76039.3,
+      "step_time_ms": 5500.0
+    },
+    {
+      "iteration": 40,
+      "compliance": 85.6069,
+      "volume_fraction": 0.25,
+      "max_change": 0.0938,
+      "max_stress_mpa": 3.4,
+      "com_shift_mm": 4.554,
+      "freq1_hz": 76038.4,
+      "step_time_ms": 5500.0
+    },
+    {
+      "iteration": 41,
+      "compliance": 85.6068,
+      "volume_fraction": 0.25,
+      "max_change": 0.0713,
+      "max_stress_mpa": 3.4,
+      "com_shift_mm": 4.556,
+      "freq1_hz": 76037.8,
+      "step_time_ms": 5500.0
+    },
+    {
+      "iteration": 42,
+      "compliance": 85.6068,
+      "volume_fraction": 0.25,
+      "max_change": 0.0775,
+      "max_stress_mpa": 3.4,
+      "com_shift_mm": 4.558,
+      "freq1_hz": 76038.0,
+      "step_time_ms": 5500.0
+    },
+    {
+      "iteration": 43,
+      "compliance": 85.6068,
+      "volume_fraction": 0.25,
+      "max_change": 0.0799,
+      "max_stress_mpa": 3.4,
+      "com_shift_mm": 4.56,
+      "freq1_hz": 76038.7,
+      "step_time_ms": 5500.0
+    },
+    {
+      "iteration": 44,
+      "compliance": 85.6067,
+      "volume_fraction": 0.25,
+      "max_change": 0.0816,
+      "max_stress_mpa": 3.4,
+      "com_shift_mm": 4.562,
+      "freq1_hz": 76039.6,
+      "step_time_ms": 5500.0
+    },
+    {
+      "iteration": 45,
+      "compliance": 85.6067,
+      "volume_fraction": 0.25,
+      "max_change": 0.0834,
+      "max_stress_mpa": 3.4,
+      "com_shift_mm": 4.564,
+      "freq1_hz": 76040.6,
+      "step_time_ms": 5500.0
+    },
+    {
+      "iteration": 46,
+      "compliance": 85.6067,
+      "volume_fraction": 0.25,
+      "max_change": 0.0864,
+      "max_stress_mpa": 3.4,
+      "com_shift_mm": 4.566,
+      "freq1_hz": 76041.8,
+      "step_time_ms": 5500.0
+    },
+    {
+      "iteration": 47,
+      "compliance": 85.6066,
+      "volume_fraction": 0.25,
+      "max_change": 0.0939,
+      "max_stress_mpa": 3.4,
+      "com_shift_mm": 4.569,
+      "freq1_hz": 76043.2,
+      "step_time_ms": 5500.0
+    },
+    {
+      "iteration": 48,
+      "compliance": 85.6066,
+      "volume_fraction": 0.25,
+      "max_change": 0.089,
+      "max_stress_mpa": 3.4,
+      "com_shift_mm": 4.572,
+      "freq1_hz": 76044.8,
+      "step_time_ms": 5500.0
+    },
+    {
+      "iteration": 49,
+      "compliance": 85.6066,
+      "volume_fraction": 0.25,
+      "max_change": 0.0884,
+      "max_stress_mpa": 3.4,
+      "com_shift_mm": 4.574,
+      "freq1_hz": 76046.0,
+      "step_time_ms": 5500.0
+    },
+    {
+      "iteration": 50,
+      "compliance": 85.6066,
+      "volume_fraction": 0.25,
+      "max_change": 0.0925,
+      "max_stress_mpa": 3.4,
+      "com_shift_mm": 4.577,
+      "freq1_hz": 76047.2,
+      "step_time_ms": 5500.0
+    }
+  ]
+}

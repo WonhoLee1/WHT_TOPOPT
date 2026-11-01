@@ -1,0 +1,15 @@
+{
+  "model_name": "Model 3-Hybrid (SE-AHCA Warmup + MMA)",
+  "wall_sec": 91.93997139999556,
+  "mass_g": 244.1286942812579,
+  "weighted_compliance_Nmm": 36457.69614372092,
+  "compliance_per_case_Nmm": [
+    39591.20741968788,
+    48164.864262379095,
+    22586.783538426946,
+    12257.14347312091
+  ],
+  "worst_vm_max_MPa": 1182.057934620264,
+  "worst_vm_p995_MPa": 832.012388130715,
+  "passes_yield_p995": true
+}

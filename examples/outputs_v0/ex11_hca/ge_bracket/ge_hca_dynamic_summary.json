@@ -1,0 +1,22 @@
+{
+  "model_name": "Model 2-HCA (Dynamic F-ESL Gust)",
+  "wall_sec": 114.1503831999944,
+  "mass_g": 244.1286942812579,
+  "weighted_compliance_Nmm": 30710.393528249504,
+  "compliance_per_case_Nmm": [
+    39955.35227847187,
+    33346.780043224564,
+    19808.664790424926,
+    10929.142575707687
+  ],
+  "worst_vm_max_MPa": 923.3592989144889,
+  "worst_vm_p995_MPa": 746.0152871893708,
+  "passes_yield_p995": true,
+  "natural_freq_hz": 485.0,
+  "natural_freq_stat_hz": 392.0,
+  "peak_disp_mm": 0.3195546883372598,
+  "peak_disp_stat_mm": 0.5074152097325085,
+  "rms_post_mm": 0.05315206726716966,
+  "rms_post_stat_mm": 0.10287346046377087,
+  "dynamic_stiffness_gain_pct": 37.023037108856514
+}

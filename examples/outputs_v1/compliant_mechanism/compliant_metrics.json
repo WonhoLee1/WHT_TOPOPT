@@ -1,0 +1,67 @@
+{
+  "benchmark_title": "8번 Compliant Mechanism (Force Inverter) Benchmark",
+  "date": "2026-11-02 00:10:21",
+  "domain": {
+    "lx_mm": 100.0,
+    "ly_mm": 100.0,
+    "lz_mm": 10.0,
+    "mesh_2d": "120x120 Q4 (14,400 elements)",
+    "mesh_3d": "60x60x10 Hex8 (36,000 elements)",
+    "target_volume_fraction": 0.25
+  },
+  "boundary_conditions": {
+    "fixed_pivots": "Left top (0, ly) & Left bot (0, 0)",
+    "input_load": "F_in = 1.0 N at (0, ly/2) (+x)",
+    "input_spring": "k_in = 1.0",
+    "output_spring": "k_out = 0.001",
+    "measurement": "u_out at (lx, ly/2) (-x reverse direction)"
+  },
+  "models": {
+    "mma_3d_extrusion": {
+      "algorithm": "MMA (Method of Moving Asymptotes)",
+      "final_u_out_mm": 4.310380311887013,
+      "final_u_in_mm": 0.9388823927307124,
+      "amplification_gain": 4.590969375142286,
+      "kinematic_efficiency_percent": 1.9788824007089538,
+      "final_volfrac": 0.24884369209677393,
+      "iterations": 30,
+      "time_fem_sec": 39.63472439999896,
+      "time_adjoint_sec": 39.63472439999896,
+      "time_opt_sec": 5.982407299990882,
+      "time_total_sec": 85.28173520000564,
+      "avg_step_ms": 2842.7245066668547
+    },
+    "se_ahca_3d_extrusion": {
+      "algorithm": "SE-AHCA (Stress-Energy Adaptive HCA)",
+      "final_u_out_mm": -0.2579565838866769,
+      "final_u_in_mm": 0.5120941042149156,
+      "amplification_gain": 0.5037288689002709,
+      "kinematic_efficiency_percent": 0.012994017822661363,
+      "final_volfrac": 0.250000000000376,
+      "iterations": 30,
+      "time_fem_sec": 3.7153549499962537,
+      "time_adjoint_sec": 3.7153549499962537,
+      "time_opt_sec": 0.9642434999841498,
+      "time_total_sec": 8.415844499999366,
+      "avg_step_ms": 280.5281499999789
+    },
+    "mma_2d_highres": {
+      "algorithm": "MMA 2D High-Res",
+      "final_u_out_mm": 2.5278648151437393,
+      "final_u_in_mm": 0.9869548393284403,
+      "amplification_gain": 2.561277086258364,
+      "kinematic_efficiency_percent": 0.6474562228186395,
+      "final_volfrac": 0.24951195043414018,
+      "iterations": 30,
+      "time_total_sec": 51.82710059999954
+    }
+  },
+  "watertight_stl": {
+    "file_name": "compliant_mechanism_3d.stl",
+    "is_watertight": true,
+    "vertices": 7996,
+    "faces": 15976,
+    "open_edges": 0,
+    "euler_number": 8
+  }
+}

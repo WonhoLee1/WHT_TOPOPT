@@ -1,0 +1,9 @@
+{
+  "solver": "kratos",
+  "final_compliance": 222.50059576384024,
+  "final_volume": 0.29615958621691335,
+  "peak_stress_mpa": 56.33745733368467,
+  "peak_dyn_disp_mm": 0.29515525450817015,
+  "avg_dyn_time_s": 69.01655333749841,
+  "avg_total_time_s": 72.61604286249803
+}

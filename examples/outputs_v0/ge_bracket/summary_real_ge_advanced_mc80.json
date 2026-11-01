@@ -1,0 +1,134 @@
+[
+  {
+    "mass_g": 234.31826761771435,
+    "compliance_per_case_Nmm": [
+      3721944955.162733,
+      2382000473.8415837,
+      2133254361.416706,
+      933929706.5126145
+    ],
+    "weighted_compliance_Nmm": 2656424743.0861135,
+    "vm_max_per_case_MPa": [
+      1504.3508455430133,
+      838.0614267392358,
+      1023.4048486817255,
+      746.897562567681
+    ],
+    "vm_p995_per_case_MPa": [
+      850.6320951185548,
+      526.5475770260523,
+      620.1964796630231,
+      397.2222278322313
+    ],
+    "worst_vm_max_MPa": 1504.3508455430133,
+    "worst_vm_p995_MPa": 850.6320951185548,
+    "passes_yield_max": false,
+    "passes_yield_p995": true,
+    "algo": "gcmma",
+    "name": "SIMP + GCMMA (Svanberg 2002)",
+    "volfrac": 0.15,
+    "mesh_control": 80,
+    "iterations": 35,
+    "converged": false,
+    "wall_sec": 1847.07
+  },
+  {
+    "mass_g": 234.31826761771435,
+    "compliance_per_case_Nmm": [
+      3607487232.846814,
+      2508688677.5833607,
+      2266065359.2618155,
+      998989769.0839126
+    ],
+    "weighted_compliance_Nmm": 2693773617.4113154,
+    "vm_max_per_case_MPa": [
+      1502.8180854244335,
+      749.6128947233362,
+      1104.7267166389013,
+      784.3669648854913
+    ],
+    "vm_p995_per_case_MPa": [
+      836.7434188057821,
+      556.867329700642,
+      643.7294178059168,
+      412.7622569551235
+    ],
+    "worst_vm_max_MPa": 1502.8180854244335,
+    "worst_vm_p995_MPa": 836.7434188057821,
+    "passes_yield_max": false,
+    "passes_yield_p995": true,
+    "algo": "mma",
+    "name": "SIMP + MMA (Svanberg 1987)",
+    "volfrac": 0.15,
+    "mesh_control": 80,
+    "iterations": 60,
+    "converged": false,
+    "wall_sec": 1480.68
+  },
+  {
+    "mass_g": 234.31826761771435,
+    "compliance_per_case_Nmm": [
+      4081224566.0722027,
+      9085083028.530571,
+      2592563679.9198413,
+      862714037.7576444
+    ],
+    "weighted_compliance_Nmm": 5212991797.870703,
+    "vm_max_per_case_MPa": [
+      1060.68477649388,
+      1332.958836402626,
+      936.6756023379726,
+      652.0812104908168
+    ],
+    "vm_p995_per_case_MPa": [
+      720.8794430762667,
+      1137.6449397770898,
+      590.6192297946485,
+      501.41199718329284
+    ],
+    "worst_vm_max_MPa": 1332.958836402626,
+    "worst_vm_p995_MPa": 1137.6449397770898,
+    "passes_yield_max": false,
+    "passes_yield_p995": false,
+    "algo": "semdot",
+    "name": "SEMDOT (Fu & Rolfe 2020)",
+    "volfrac": 0.15,
+    "mesh_control": 80,
+    "iterations": 60,
+    "converged": false,
+    "wall_sec": 1308.99
+  },
+  {
+    "mass_g": 234.31826761771435,
+    "compliance_per_case_Nmm": [
+      3607487232.846814,
+      2508688677.5833607,
+      2266065359.2618155,
+      998989769.0839126
+    ],
+    "weighted_compliance_Nmm": 2693773617.4113154,
+    "vm_max_per_case_MPa": [
+      1502.8180854244335,
+      749.6128947233362,
+      1104.7267166389013,
+      784.3669648854913
+    ],
+    "vm_p995_per_case_MPa": [
+      836.7434188057821,
+      556.867329700642,
+      643.7294178059168,
+      412.7622569551235
+    ],
+    "worst_vm_max_MPa": 1502.8180854244335,
+    "worst_vm_p995_MPa": 836.7434188057821,
+    "passes_yield_max": false,
+    "passes_yield_p995": true,
+    "algo": "kratos_mma",
+    "name": "Kratos-v2 Native + MMA (Intel MKL PARDISO)",
+    "volfrac": 0.15,
+    "mesh_control": 80,
+    "iterations": 60,
+    "converged": false,
+    "wall_sec": 871.04
+  }
+]

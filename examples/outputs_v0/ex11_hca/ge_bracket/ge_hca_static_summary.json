@@ -1,0 +1,15 @@
+{
+  "model_name": "Model 1-HCA (Static Multi-Load)",
+  "wall_sec": 148.4009045999992,
+  "mass_g": 244.1286942812579,
+  "weighted_compliance_Nmm": 30778.03626009953,
+  "compliance_per_case_Nmm": [
+    39171.510207114945,
+    33526.58298048955,
+    21258.600858767746,
+    10819.83472684405
+  ],
+  "worst_vm_max_MPa": 960.6314197152836,
+  "worst_vm_p995_MPa": 735.6445661381123,
+  "passes_yield_p995": true
+}
