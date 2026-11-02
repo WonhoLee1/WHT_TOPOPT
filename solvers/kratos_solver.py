@@ -127,7 +127,7 @@ def _check_in_memory_topopt() -> bool:
 def resolve_kratos_python_path() -> Optional[str]:
     """Find a Python executable capable of executing Kratos scripts."""
     # 1. Environment variables
-    for env_var in ("KRATOS_PYTHON", "AIENG_KRATOS_PYTHON"):
+    for env_var in ("WHT_KRATOS_PYTHON", "KRATOS_PYTHON", "AIENG_KRATOS_PYTHON"):
         val = os.environ.get(env_var, "").strip().strip('"')
         if val and (shutil.which(val) or Path(val).is_file()):
             return str(Path(val).resolve())

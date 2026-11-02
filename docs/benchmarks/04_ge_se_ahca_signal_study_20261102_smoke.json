@@ -1,0 +1,119 @@
+[
+  {
+    "mass_g": 244.13,
+    "compliance_per_case_Nmm": [
+      4481196562.1,
+      6964109474.1,
+      3620692972.2,
+      1520804529.7
+    ],
+    "weighted_compliance_Nmm": 4882076160.1,
+    "vm_max_per_case_MPa": [
+      1042.8,
+      1272.7,
+      801.7,
+      652.2
+    ],
+    "vm_p995_per_case_MPa": [
+      737.1,
+      1033.8,
+      607.5,
+      454.4
+    ],
+    "worst_vm_max_MPa": 1272.7,
+    "worst_vm_p995_MPa": 1033.8,
+    "safety_factor": 0.87,
+    "passes_yield_max": false,
+    "passes_yield_p995": false,
+    "algo": "se_ahca",
+    "name": "SE-AHCA [base]",
+    "iterations": 4,
+    "t_fem_sec": 11.18,
+    "t_sens_sec": 0.78,
+    "t_opt_sec": 0.02,
+    "t_total_sec": 14.41,
+    "time_per_step_ms": 3603.3,
+    "variant": "base",
+    "options": "rho^p | no projection | no density filter | smoothing=moving_average",
+    "grayness_inside": 0.0393,
+    "final_weighted_comp_history": 42573975382.4
+  },
+  {
+    "mass_g": 244.13,
+    "compliance_per_case_Nmm": [
+      6343538449.6,
+      20319216274.4,
+      4435619146.1,
+      1117219982.5
+    ],
+    "weighted_compliance_Nmm": 10330809980.9,
+    "vm_max_per_case_MPa": [
+      863.5,
+      1857.3,
+      758.3,
+      503.8
+    ],
+    "vm_p995_per_case_MPa": [
+      787.3,
+      1524.5,
+      682.3,
+      454.2
+    ],
+    "worst_vm_max_MPa": 1857.3,
+    "worst_vm_p995_MPa": 1524.5,
+    "safety_factor": 0.59,
+    "passes_yield_max": false,
+    "passes_yield_p995": false,
+    "algo": "se_ahca",
+    "name": "SE-AHCA [p]",
+    "iterations": 4,
+    "t_fem_sec": 8.29,
+    "t_sens_sec": 0.58,
+    "t_opt_sec": 0.14,
+    "t_total_sec": 11.35,
+    "time_per_step_ms": 2837.9,
+    "variant": "p",
+    "options": "rho^p | Heaviside b1->8 | filter r=2.2h | smoothing=density_filter",
+    "grayness_inside": 0.0557,
+    "final_weighted_comp_history": 96547847517.2
+  },
+  {
+    "mass_g": 244.13,
+    "compliance_per_case_Nmm": [
+      4670095263.1,
+      7935072348.3,
+      2920480600.0,
+      1197249563.7
+    ],
+    "weighted_compliance_Nmm": 5115629740.4,
+    "vm_max_per_case_MPa": [
+      966.4,
+      1820.8,
+      762.1,
+      517.1
+    ],
+    "vm_p995_per_case_MPa": [
+      745.6,
+      1041.1,
+      637.4,
+      422.0
+    ],
+    "worst_vm_max_MPa": 1820.8,
+    "worst_vm_p995_MPa": 1041.1,
+    "safety_factor": 0.87,
+    "passes_yield_max": false,
+    "passes_yield_p995": false,
+    "algo": "se_ahca",
+    "name": "SE-AHCA [pm1]",
+    "iterations": 4,
+    "t_fem_sec": 8.36,
+    "t_sens_sec": 0.59,
+    "t_opt_sec": 0.14,
+    "t_total_sec": 11.49,
+    "time_per_step_ms": 2871.4,
+    "variant": "pm1",
+    "options": "rho^(p-1) | Heaviside b1->8 | filter r=2.2h | smoothing=density_filter",
+    "grayness_inside": 0.0622,
+    "final_weighted_comp_history": 94537713421.9
+  }
+]

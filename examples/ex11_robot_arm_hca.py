@@ -594,12 +594,9 @@ def main():
     html_path = out_dir / "ex11_robot_arm_hca_report.html"
     build_ex11_robot_arm_hca_report(stl_static_path, stl_dyn_path, m_hca_s, m_hca_d, m_mma_s, m_mma_d, html_path)
 
-    # Mirror to brain and aieng
+    # Mirror to brain
     brain_dir = Path("C:/Users/GOODMAN/.gemini/antigravity-cli/brain/5fa6c777-54ee-4efb-9a95-73c6214c8bb1")
     shutil.copyfile(html_path, brain_dir / "ex11_robot_arm_hca_report.html")
-    mirror_aieng = Path("aieng/examples/output/ex11_hca")
-    mirror_aieng.mkdir(parents=True, exist_ok=True)
-    shutil.copyfile(html_path, mirror_aieng / "ex11_robot_arm_hca_report.html")
 
     print("\n" + "="*80)
     print(" [SUCCESS] Robot Arm SE-AHCA Benchmark Complete!")

@@ -45,6 +45,22 @@ from .continuation import ContinuationScheduler
 
 from .boundary import BoundaryConditionManager
 
+from .stl_domain import (
+    Mesh,
+    structured_hex,
+    StlCase,
+    build_stl_problem,
+    inside_grid,
+    read_stl,
+    RigidBody,
+    LoadCase,
+    TopOptProblem,
+    TopOptEvaluator,
+    BuiltinAdapter,
+    run_topology_optimization,
+    ProgressGif,
+)
+
 __all__ = [
     # Mesh
     "StructuredMesh2D",
@@ -81,4 +97,18 @@ __all__ = [
     "ContinuationScheduler",
     # Boundary Conditions
     "BoundaryConditionManager",
+    # STL Domain & Hex8 TopOpt Core
+    "Mesh",
+    "structured_hex",
+    "StlCase",
+    "build_stl_problem",
+    "inside_grid",
+    "read_stl",
+    "RigidBody",
+    "LoadCase",
+    "TopOptProblem",
+    "TopOptEvaluator",
+    "BuiltinAdapter",
+    "run_topology_optimization",
+    "ProgressGif",
 ]

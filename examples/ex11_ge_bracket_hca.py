@@ -42,16 +42,21 @@ os.environ["OMP_NUM_THREADS"] = "6"
 os.environ["MKL_NUM_THREADS"] = "6"
 
 ROOT = Path(__file__).resolve().parents[2]
-AIENG_SRC = ROOT / "aieng" / "src"
-if str(AIENG_SRC) not in sys.path:
-    sys.path.insert(0, str(AIENG_SRC))
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from aieng.topopt import BuiltinAdapter, TopOptEvaluator
-from aieng.topopt.elements import _b_matrix, _hex8_dN, isotropic_D, reference_stiffness
-from aieng.topopt.problem import LoadCase, TopOptProblem
-from aieng.topopt.stl_domain import StlCase, build_stl_problem
+from wht_topopt.core.stl_domain import (
+    BuiltinAdapter,
+    TopOptEvaluator,
+    LoadCase,
+    TopOptProblem,
+    StlCase,
+    build_stl_problem,
+    _b_matrix,
+    _hex8_dN,
+    isotropic_D,
+    reference_stiffness,
+)
 from wht_topopt.algorithms import MMAOptimizer
 from wht_topopt.algorithms.hca import SEAHCAConfig, StressEnergyAdaptiveHCA
 
@@ -1130,10 +1135,8 @@ def main():
     html_path = out_dir / "ex11_ge_bracket_hca_report.html"
     build_master_html_report(stat_stl_path, dyn_stl_path, vib_png_path, sum_stat, sum_dyn, html_path)
 
-    # Mirror all generated assets to brain and aieng
+    # Mirror all generated assets to brain
     brain_dir = Path("C:/Users/GOODMAN/.gemini/antigravity-cli/brain/5fa6c777-54ee-4efb-9a95-73c6214c8bb1")
-    mirror_aieng = ROOT / "aieng" / "examples" / "output" / "ex11_hca" / "ge_bracket"
-    mirror_aieng.mkdir(parents=True, exist_ok=True)
 
     assets_to_mirror = [
         html_path, stat_stl_path, dyn_stl_path, hybrid_stl_path,
@@ -1145,8 +1148,7 @@ def main():
     for asset in assets_to_mirror:
         if asset.exists():
             shutil.copyfile(asset, brain_dir / asset.name)
-            shutil.copyfile(asset, mirror_aieng / asset.name)
-            print(f" [+] Mirrored to Brain & AI-Eng: {asset.name}")
+            print(f" [+] Mirrored to Brain: {asset.name}")
 
     print("\n" + "="*80)
     print(" [SUCCESS] GE Bracket SE-AHCA Benchmark (Static & Dynamic) Fully Complete!")

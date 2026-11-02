@@ -52,19 +52,25 @@ except Exception:
 
 # Ensure paths
 ROOT = Path(__file__).resolve().parents[2]
-AIENG_SRC = ROOT / "aieng" / "src"
-if str(AIENG_SRC) not in sys.path:
-    sys.path.insert(0, str(AIENG_SRC))
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from aieng.topopt import BuiltinAdapter, TopOptEvaluator, run_topology_optimization
-from aieng.topopt.driver import _constraints
-from aieng.topopt.elements import _b_matrix, _hex8_dN, isotropic_D, reference_stiffness
-from aieng.topopt.mesh import Mesh
-from aieng.topopt.optimizers.mma import GCMMA, MMA
-from aieng.topopt.problem import LoadCase, TopOptProblem
-from aieng.topopt.stl_domain import StlCase, build_stl_problem
+from wht_topopt.core.stl_domain import (
+    BuiltinAdapter,
+    Mesh,
+    LoadCase,
+    TopOptProblem,
+    TopOptEvaluator,
+    StlCase,
+    build_stl_problem,
+    _b_matrix,
+    _hex8_dN,
+    isotropic_D,
+    reference_stiffness,
+    run_topology_optimization,
+    _constraints,
+)
+from wht_topopt.algorithms.mma_wrapper import MMAOptimizer as MMA
 from wht_topopt.algorithms.hca import SEAHCAConfig, StressEnergyAdaptiveHCA
 
 # Physical and challenge constants
@@ -96,6 +102,41 @@ CASE_GE = StlCase(
 LOAD_WEIGHTS = np.array([0.35, 0.35, 0.20, 0.10], dtype=float)
 
 
+@dataclass
+class SeAhcaOptions:
+    """Pure SE-AHCA settings (refactor of docs/references/investigations/se_ahca_improvement_study_from_aieng_20261102.md).
+
+    Only items 2) projection and 3) single signal smoothing of the study are applied; the signal exponent is the
+    compared variable (rho^p is what this example always used, rho^(p-1) is the SIMP-sensitivity form).
+
+    Attributes:
+        signal_exponent: "p" -> element strain energy E_phys * u0 ~ rho^p * u0; "p_minus_1" -> rho^(p-1) * u0.
+        projection: Heaviside(filter(xi)) is passed to ``hca.step`` as ``forward_projection_fn`` (volume bisection on the
+            projected density) and the evaluator beta follows the schedule below.
+        smoothing: Single signal smoothing. "density_filter": spatial density-filter average of the signal only
+            (history_window = 1). "moving_average": 2-step moving average only, no spatial filter on the signal.
+        rmin_factor: Density filter radius in element sizes (0 = no density filter, the previous behaviour).
+        beta_init: Initial Heaviside beta.
+        beta_max: Maximum Heaviside beta.
+        beta_interval: beta is doubled every ``beta_interval`` iterations until ``beta_max``.
+    """
+
+    signal_exponent: str = "p_minus_1"
+    projection: bool = True
+    smoothing: str = "density_filter"
+    rmin_factor: float = 2.2
+    beta_init: float = 1.0
+    beta_max: float = 8.0
+    beta_interval: int = 20
+
+    def label(self) -> str:
+        """Short human readable id used in tables."""
+        exp = "rho^(p-1)" if self.signal_exponent == "p_minus_1" else "rho^p"
+        proj = f"Heaviside b{self.beta_init:g}->{self.beta_max:g}" if self.projection else "no projection"
+        filt = f"filter r={self.rmin_factor:g}h" if self.rmin_factor > 0 else "no density filter"
+        return f"{exp} | {proj} | {filt} | smoothing={self.smoothing}"
+
+
 def make_extrusion_groups(grid: Tuple[int, int, int], axis: str) -> np.ndarray:
     """Generate element group indices for uniform extrusion along a Cartesian axis."""
     nx, ny, nz = grid
@@ -112,6 +153,81 @@ def make_extrusion_groups(grid: Tuple[int, int, int], axis: str) -> np.ndarray:
         raise ValueError(f"Unknown extrusion axis: {axis}")
     _, groups = np.unique(raw, return_inverse=True)
     return groups
+
+
+def skin_elements(problem: Any, inside: np.ndarray, thickness_mm: float, faces: List[str]) -> np.ndarray:
+    """Select passive-solid skin elements on the exposed faces of the design domain.
+
+    An element is exposed on a face (e.g. ``"z+"``) when its neighbour in that direction lies outside the design
+    domain. The exposed layer is grown inward to the requested thickness (an integer number of elements).
+
+    Args:
+        problem: TopOptProblem whose ``mesh.grid`` is (nx, ny, nz); element arrays are ordered (nz, ny, nx).
+        inside: Boolean (n_elems,) mask of elements inside the STL design domain.
+        thickness_mm: Skin thickness in mm; rounded to the nearest whole number of elements (minimum 1).
+        faces: Face labels from ``{"x-", "x+", "y-", "y+", "z-", "z+"}``.
+
+    Returns:
+        Sorted element indices (flat) belonging to the selected skin faces.
+    """
+    nx, ny, nz = problem.mesh.grid
+    h = float(problem.mesh.nodes[1, 0] - problem.mesh.nodes[0, 0])
+    layers = max(1, int(round(thickness_mm / h)))
+    ins = inside.reshape(nz, ny, nx)
+    axis_of = {"x": 2, "y": 1, "z": 0}
+    selected = np.zeros_like(ins)
+    for face in faces:
+        if len(face) != 2 or face[0] not in axis_of or face[1] not in "+-":
+            raise ValueError(f"Unknown skin face: {face!r} (use x-/x+/y-/y+/z-/z+)")
+        ax, sign = axis_of[face[0]], (1 if face[1] == "+" else -1)
+
+        # neighbour_inside[e] is True when the neighbour of e in the face direction is inside the domain
+        neighbour_inside = np.zeros_like(ins)
+        src, dst = [slice(None)] * 3, [slice(None)] * 3
+        if sign > 0:
+            src[ax], dst[ax] = slice(1, None), slice(0, -1)
+        else:
+            src[ax], dst[ax] = slice(0, -1), slice(1, None)
+        neighbour_inside[tuple(dst)] = ins[tuple(src)]
+        grown = ins & ~neighbour_inside
+
+        for _ in range(layers - 1):
+            shifted = np.zeros_like(ins)
+            s2, d2 = [slice(None)] * 3, [slice(None)] * 3
+            if sign > 0:
+                s2[ax], d2[ax] = slice(0, -1), slice(1, None)
+            else:
+                s2[ax], d2[ax] = slice(1, None), slice(0, -1)
+            shifted[tuple(d2)] = grown[tuple(s2)]
+            grown = grown | (shifted & ins)
+        selected |= grown
+    return np.flatnonzero(selected.ravel())
+
+
+def make_inside_signal_filter(H: Any, inside_elems: np.ndarray, n_elems: int) -> Any:
+    """Build a spatial smoothing function for per-element signals of the design (inside) elements.
+
+    The evaluator's density-filter matrix ``H`` acts on the full grid; elements outside the STL domain are void, so the
+    average is renormalised by the filtered inside-indicator to avoid diluting the signal near the domain boundary.
+
+    Args:
+        H: Sparse (n_elems, n_elems) density filter matrix (``TopOptEvaluator.H``).
+        inside_elems: Flat indices of design elements.
+        n_elems: Total number of grid elements.
+
+    Returns:
+        Function mapping an (n_inside,) signal to its filtered (n_inside,) version.
+    """
+    indicator = np.zeros(n_elems, dtype=float)
+    indicator[inside_elems] = 1.0
+    denom = np.maximum(H @ indicator, 1e-12)[inside_elems]
+
+    def _filter(signal: np.ndarray) -> np.ndarray:
+        full = np.zeros(n_elems, dtype=float)
+        full[inside_elems] = signal
+        return (H @ full)[inside_elems] / denom
+
+    return _filter
 
 
 def calculate_von_mises(mesh: Any, E: np.ndarray, nu: float, u: np.ndarray) -> np.ndarray:
@@ -277,8 +393,25 @@ def run_single_algorithm(
     volfrac: float,
     out_dir: Path,
     force_rerun: bool,
+    se_opts: Optional[SeAhcaOptions] = None,
 ) -> Dict[str, Any]:
-    """Execute single optimization algorithm with detailed phase profiling."""
+    """Execute single optimization algorithm with detailed phase profiling.
+
+    Args:
+        tag: Algorithm tag (mma, gcmma, semdot, beso, se_ahca, hybrid_se_ahca, kratos_ext_y, kratos_ext_z).
+        name: Display name.
+        p_base: Base problem (STL domain, loads, passive solid incl. optional skin).
+        adapter: FE solver adapter.
+        inside: Boolean mask of design elements.
+        vol: Element volumes.
+        h: Element size [mm].
+        max_iters: Iterations of the algorithm.
+        volfrac: Target volume fraction of the design domain.
+        out_dir: Output directory for cached arrays.
+        force_rerun: Unused cache flag kept for CLI compatibility.
+        se_opts: Settings of the pure SE-AHCA branch (tag ``se_ahca`` only); defaults to ``SeAhcaOptions()``.
+    """
+    se_opts = se_opts or SeAhcaOptions()
     print("\n" + "=" * 90)
     print(f" [RUN] Benchmarking Algorithm: {name} (tag={tag}, max_iters={max_iters})")
     print("=" * 90, flush=True)
@@ -295,7 +428,15 @@ def run_single_algorithm(
     t_wall_start = time.perf_counter()
 
     if tag == "se_ahca":
-        # 1. Pure SE-AHCA
+        # 1. Pure SE-AHCA (study items 2) Heaviside projection and 3) single signal smoothing; signal exponent selectable)
+        if se_opts.signal_exponent not in ("p", "p_minus_1"):
+            raise ValueError(f"Unknown signal_exponent: {se_opts.signal_exponent}")
+        if se_opts.smoothing not in ("density_filter", "moving_average"):
+            raise ValueError(f"Unknown smoothing: {se_opts.smoothing}")
+        if se_opts.smoothing == "density_filter" and se_opts.rmin_factor <= 0.0:
+            raise ValueError("smoothing='density_filter' needs rmin_factor > 0")
+        print(f"   [SE-AHCA options] {se_opts.label()}", flush=True)
+
         inside_elems = np.where(inside)[0]
         n_inside = len(inside_elems)
         vols_inside = vol[inside_elems]
@@ -310,13 +451,29 @@ def run_single_algorithm(
             qp_relax_exp=0.50,
             overstress_exponent=3.0,
             move_limit=0.15,
+            history_window=1 if se_opts.smoothing == "density_filter" else 2,
         )
         hca = StressEnergyAdaptiveHCA(
             elem_volumes=vols_inside,
             config=cfg,
             passive_solid_mask=passive_solid_inside,
         )
-        evaluator = TopOptEvaluator(p_base, adapter)
+        # Density filter radius is a property of this branch only (evaluator problem); other algorithms keep p_base.
+        p_se = replace(p_base, rmin=se_opts.rmin_factor * h)
+        evaluator = TopOptEvaluator(p_se, adapter)
+        signal_filter_fn = (
+            make_inside_signal_filter(evaluator.H, inside_elems, p_base.mesh.n_elems)
+            if se_opts.smoothing == "density_filter"
+            else None
+        )
+
+        def physical_inside(x_in: np.ndarray) -> np.ndarray:
+            """Design variable of the inside elements -> projected physical density (passive regions forced)."""
+            x_try = np.zeros(p_base.mesh.n_elems, dtype=float)
+            x_try[inside_elems] = x_in
+            x_try[p_base.passive_solid] = 1.0
+            return evaluator.physical(x_try)[0][inside_elems]
+
         x_inside = np.full(n_inside, volfrac, dtype=float)
         x_full = np.zeros(p_base.mesh.n_elems, dtype=float)
         x_full[inside_elems] = x_inside
@@ -325,6 +482,8 @@ def run_single_algorithm(
         for it in range(1, max_iters + 1):
             x_full[inside_elems] = x_inside
             x_full[p_base.passive_solid] = 1.0
+            if se_opts.projection:
+                evaluator.beta = min(se_opts.beta_max, se_opts.beta_init * 2.0 ** ((it - 1) // se_opts.beta_interval))
 
             # FEM Solve
             t0 = time.perf_counter()
@@ -348,6 +507,9 @@ def run_single_algorithm(
                 k_ue = np.einsum("nab,nb->na", ke_batch, ue_c)
                 elem_energy = 0.5 * np.sum(ue_c * k_ue, axis=1)
                 sed_all[c] = E_field * elem_energy
+            if se_opts.signal_exponent == "p_minus_1":
+                # rho^p * u0 -> rho^(p-1) * u0 (SIMP sensitivity form)
+                sed_all = sed_all / np.maximum(rho_phys, 1e-3)[None, :]
 
             sed_inside = sed_all[:, inside_elems]
             vm_inside = vm_all[:, inside_elems]
@@ -358,12 +520,17 @@ def run_single_algorithm(
                 strain_energy_cases=sed_inside,
                 von_mises_unpenalized_cases=vm_inside,
                 case_weights=LOAD_WEIGHTS,
+                neighborhood_filter_fn=signal_filter_fn,
             )
             t_sens_total += time.perf_counter() - t0
 
             # Optimizer Step
             t0 = time.perf_counter()
-            x_next, rho_next, s_star = hca.step(xi_current=x_inside, cell_signal=signal)
+            x_next, rho_next, s_star = hca.step(
+                xi_current=x_inside,
+                cell_signal=signal,
+                forward_projection_fn=physical_inside if se_opts.projection else None,
+            )
             diff = float(np.max(np.abs(x_next - x_inside)))
             x_inside = x_next
             t_opt_total += time.perf_counter() - t0
@@ -372,7 +539,7 @@ def run_single_algorithm(
             density_frames.append(rho_phys.copy())
 
             if it % 5 == 0 or it == 1 or it == max_iters:
-                print(f"   [SE-AHCA Iter {it:02d}/{max_iters}] Weighted Comp: {e.compliance:,.1f} N*mm | MaxVM: {metrics['max_solid_stress']:6.1f} MPa | Chg: {diff:.4f}", flush=True)
+                print(f"   [SE-AHCA Iter {it:02d}/{max_iters}] Weighted Comp: {e.compliance:,.1f} N*mm | MaxVM: {metrics['max_solid_stress']:6.1f} MPa | Chg: {diff:.4f} | beta: {evaluator.beta:g}", flush=True)
 
         x_full[inside_elems] = x_inside
         x_full[p_base.passive_solid] = 1.0
@@ -990,9 +1157,16 @@ def main():
     parser.add_argument("--volfrac", "-v", type=float, default=0.15, help="Target volume fraction (default: 0.15, ~245g)")
     parser.add_argument("--max_iters", "-i", type=int, default=25, help="Max iterations per algorithm (default: 25)")
     parser.add_argument("--force", "-f", action="store_true", help="Force re-run even if cached")
+    parser.add_argument("--skin_mm", type=float, default=0.0, help="Passive-solid skin thickness in mm (0 = no skin case)")
+    parser.add_argument("--skin_faces", nargs="+", default=["z-", "z+"], help="Skin faces, e.g. z- z+ y+ (used when --skin_mm > 0)")
+    parser.add_argument("--algos", nargs="+", default=None, help="Algorithm tags to run (default: all, or the 6 core algorithms for a skin case)")
     args = parser.parse_args()
 
-    out_dir = ROOT / "wht_topopt" / "examples" / "outputs_v1" / "ex07_ge_bracket"
+    skin_mm = args.skin_mm
+    skin_faces = [f.lower() for f in args.skin_faces]
+    skin_tag = "skin_" + "".join(f.replace("+", "p").replace("-", "m") + "_" for f in skin_faces).rstrip("_") if skin_mm > 0 else ""
+    out_name = "ex07_ge_bracket" if skin_mm <= 0 else f"ex07_ge_bracket_{skin_tag}_mc{args.mesh_control}"
+    out_dir = ROOT / "wht_topopt" / "examples" / "outputs_v1" / out_name
     out_dir.mkdir(parents=True, exist_ok=True)
     stl_dir = ROOT / "external" / "freeto_stls"
 
@@ -1015,6 +1189,22 @@ def main():
     origin = nodes[0]
     nx, ny, nz = p_base.mesh.grid
     vol = reference_stiffness(p_base.mesh, p_base.nu).volume
+
+    if skin_mm > 0:
+        # Passive-solid skin (shell) on the selected exposed faces; excluded from the design variables.
+        skin_idx = skin_elements(p_base, inside, skin_mm, skin_faces)
+        passive_union = np.union1d(p_base.passive_solid, skin_idx)
+        budget_g = volfrac * vol[inside].sum() * DENSITY_G_MM3
+        passive_g = float(vol[passive_union].sum() * DENSITY_G_MM3)
+        free_ratio = 1.0 - passive_g / budget_g
+        print(f" [+] Skin {skin_faces} {skin_mm:.2f} mm: {len(skin_idx):,} elems | passive total {passive_g:.1f} g "
+              f"vs design budget {budget_g:.1f} g (free {free_ratio*100:.1f}%)")
+        if free_ratio < 0.10:
+            raise ValueError(
+                f"Skin + BC passive solid ({passive_g:.1f} g) leaves <10% of the volume budget ({budget_g:.1f} g). "
+                f"Increase --volfrac or reduce the skin faces/thickness."
+            )
+        p_base = replace(p_base, passive_solid=passive_union)
 
     # Native direct solver
     adapter = BuiltinAdapter(method="direct")
@@ -1045,6 +1235,13 @@ def main():
         ("kratos_ext_y", "Extruded-Y (Pin Axis Extrusion)"),
         ("kratos_ext_z", "Extruded-Z (Vertical Axis Extrusion)"),
     ]
+    default_skin_algos = ["mma", "gcmma", "semdot", "beso", "se_ahca", "hybrid_se_ahca"]
+    selected_algos = args.algos if args.algos else (default_skin_algos if skin_mm > 0 else None)
+    if selected_algos:
+        unknown = set(selected_algos) - {t for t, _ in algorithms_spec}
+        if unknown:
+            raise ValueError(f"Unknown algorithm tags: {sorted(unknown)}")
+        algorithms_spec = [(t, n) for t, n in algorithms_spec if t in selected_algos]
 
     summary_list = []
     convergence_histories = {}
@@ -1110,22 +1307,28 @@ def main():
             )
             progression_gif_done = True
 
-    # 2. Render 3-Panel Master Comparison View (Free 3D vs Extruded-Y vs Extruded-Z)
-    comparison_tags = ["hybrid_se_ahca", "kratos_ext_y", "kratos_ext_z"]
+    # 2. Render 3-Panel Master Comparison View (Free 3D vs Extruded-Y vs Extruded-Z; skin case: MMA vs SE-AHCA vs HYBRID)
+    comparison_tags = ["mma", "se_ahca", "hybrid_se_ahca"] if skin_mm > 0 else ["hybrid_se_ahca", "kratos_ext_y", "kratos_ext_z"]
     comp_available = [t for t in comparison_tags if t in solid_voxels_dict]
+    comp_png = out_dir / "ge_bracket_master_comparison_3d.png"
     if len(comp_available) == 3:
-        comp_png = out_dir / "ge_bracket_master_comparison_3d.png"
         plotter = pv.Plotter(shape=(1, 3), off_screen=True, window_size=[2400, 800])
         metrics_map = {m["algo"]: m for m in summary_list}
         algo_title_map = {
             "hybrid_se_ahca": "1. Free 3D Solid (HYBRID SE-AHCA)",
             "kratos_ext_y": "2. Y-Extruded (Pin Axis Extrusion)",
             "kratos_ext_z": "3. Z-Extruded (Vertical Axis Extrusion)",
+            "mma": "1. MMA (Skin)",
+            "se_ahca": "2. SE-AHCA (Skin)",
         }
+        if skin_mm > 0:
+            algo_title_map["hybrid_se_ahca"] = "3. HYBRID SE-AHCA (Skin)"
         color_map = {
             "hybrid_se_ahca": "#38bdf8",
             "kratos_ext_y": "#f59e0b",
             "kratos_ext_z": "#10b981",
+            "mma": "#f59e0b",
+            "se_ahca": "#10b981",
         }
 
         for idx, tag in enumerate(comp_available):
@@ -1142,7 +1345,7 @@ def main():
             m = metrics_map.get(tag, {})
             label = (
                 f"[{algo_title_map[tag]}]\n"
-                f"Mass       : {m.get('mass_g', 0):.1f} g (Target V=0.15)\n"
+                f"Mass       : {m.get('mass_g', 0):.1f} g (Target V={volfrac:.2f})\n"
                 f"Compliance : {m.get('weighted_compliance_Nmm', 0):,.1f} N*mm\n"
                 f"Worst VM   : {m.get('worst_vm_p995_MPa', 0):.1f} MPa\n"
                 f"Safety Fact: {m.get('safety_factor', 0):.2f}\n"
@@ -1229,6 +1432,7 @@ def main():
         f"- **Material**: Ti-6Al-4V (Yield: {YIELD_MPA} MPa, Density: {DENSITY_G_MM3*1e3} g/cm³)",
         f"- **Target Volume Fraction**: {volfrac*100:.1f}% (Nominal ~245 g, -25.2% vs 2013 Winner 327 g)",
         f"- **Total Algorithms Tested**: {len(summary_list)}",
+        f"- **Passive-Solid Skin**: {'none' if skin_mm <= 0 else f'{skin_mm:.2f} mm on faces {skin_faces}'}",
         "",
         "## 1. Dual Evaluation Matrices",
         "",

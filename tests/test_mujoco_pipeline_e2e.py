@@ -177,8 +177,11 @@ def test_13_stage_pipeline_3d_mujoco_post_and_pyvista(tmp_path: Path) -> None:
 
 
 def test_aieng_wht_bridge_compatibility() -> None:
-    """Verify aieng.topopt.run_wht_topopt bridge executes cleanly and returns TopOptResult."""
-    from aieng.topopt import benchmarks, run_wht_topopt
+    """Verify external aieng bridge executes cleanly if aieng is installed; skips gracefully otherwise."""
+    import pytest
+    aieng_topopt = pytest.importorskip("aieng.topopt", reason="aieng package not installed in standalone wht_topopt environment")
+    benchmarks = aieng_topopt.benchmarks
+    run_wht_topopt = aieng_topopt.run_wht_topopt
 
     prob = benchmarks.zhou_rozvany(volfrac=0.5, max_iters=6)
     res = run_wht_topopt(prob, backend="scipy")

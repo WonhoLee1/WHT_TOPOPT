@@ -18,8 +18,6 @@ ROOT = Path(__file__).resolve().parents[2]
 GE_DIR = ROOT / "wht_topopt" / "examples" / "outputs" / "ge_bracket"
 HCA_DIR = ROOT / "wht_topopt" / "examples" / "outputs" / "ex11_hca" / "ge_bracket"
 BRAIN_DIR = Path("C:/Users/GOODMAN/.gemini/antigravity-cli/brain/5fa6c777-54ee-4efb-9a95-73c6214c8bb1")
-AIENG_DIR = ROOT / "aieng" / "examples" / "output" / "ge_bracket"
-AIENG_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def b64_file(path: Path) -> str:
@@ -372,10 +370,9 @@ def main():
     out_html.write_text(html, encoding="utf-8")
     print(f" [+] Generated GE Bracket Master Comprehensive Report: {out_html}")
 
-    # Mirror to brain and aieng
+    # Mirror to brain
     shutil.copyfile(out_html, BRAIN_DIR / "ge_bracket_master_comprehensive_report.html")
-    shutil.copyfile(out_html, AIENG_DIR / "ge_bracket_master_comprehensive_report.html")
-    print(" [+] Mirrored to brain and aieng directories successfully!")
+    print(" [+] Mirrored to brain directory successfully!")
 
 
 if __name__ == "__main__":

@@ -47,7 +47,7 @@ def resolve_frontistr_executables(mode: str = "smp") -> Dict[str, Optional[str]]
     res: Dict[str, Optional[str]] = {"fistr1": None, "hecmw_part1": None, "mpiexec": None}
 
     # 1. Check environment variables
-    env_cmd = os.environ.get("FRONTISTR_CMD", os.environ.get("AIENG_FISTR_CMD", os.environ.get("FISTR_CMD", ""))).strip()
+    env_cmd = os.environ.get("FRONTISTR_CMD", os.environ.get("WHT_FISTR_CMD", os.environ.get("AIENG_FISTR_CMD", os.environ.get("FISTR_CMD", "")))).strip()
     if env_cmd:
         parts = [t.strip('"') for t in shlex.split(env_cmd, posix=(os.name != "nt"))]
         found = shutil.which(parts[0]) or (parts[0] if Path(parts[0]).is_file() else None)

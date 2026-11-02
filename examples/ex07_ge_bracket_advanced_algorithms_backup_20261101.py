@@ -45,16 +45,23 @@ except Exception:
     plt.rcParams["axes.unicode_minus"] = False
 
 ROOT = Path(__file__).resolve().parents[2]
-AIENG_SRC = ROOT / "aieng" / "src"
-if str(AIENG_SRC) not in sys.path:
-    sys.path.insert(0, str(AIENG_SRC))
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from aieng.topopt import BuiltinAdapter, TopOptEvaluator, run_topology_optimization
-from aieng.topopt.elements import _b_matrix, _hex8_dN, isotropic_D, reference_stiffness
-from aieng.topopt.mesh import Mesh
-from aieng.topopt.stl_domain import StlCase, build_stl_problem
+from wht_topopt.core.stl_domain import (
+    BuiltinAdapter,
+    Mesh,
+    TopOptEvaluator,
+    StlCase,
+    build_stl_problem,
+    _b_matrix,
+    _hex8_dN,
+    isotropic_D,
+    reference_stiffness,
+    run_topology_optimization,
+    _constraints,
+)
+from wht_topopt.algorithms.mma_wrapper import MMAOptimizer as MMA
 from wht_topopt.solvers.kratos_solver import KratosSolver
 
 # Physical and challenge constants
@@ -162,8 +169,8 @@ def run_kratos_native_optimization(
     history_comp = []
 
     # MMA formulation
-    from aieng.topopt.driver import _constraints
-    from aieng.topopt.optimizers.mma import MMA
+    from wht_topopt.core.stl_domain import _constraints
+    from wht_topopt.algorithms.mma_wrapper import MMAOptimizer as MMA
     nvar = evaluator.n_var
     mma = MMA(nvar, 1, move=move, backend="mmapy")
 
