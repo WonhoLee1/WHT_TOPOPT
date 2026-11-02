@@ -9,6 +9,8 @@ References:
 from __future__ import annotations
 
 from typing import Any, Dict, Optional, Tuple, Union
+import warnings
+
 import numpy as np
 
 from .base import GradientSource, Optimizer, TrustRegionController
@@ -19,7 +21,7 @@ class SEMDOTOptimizer(Optimizer):
     """Smooth-Edged Material Distribution for Optimizing Topology (SEMDOT) solver.
 
     Features:
-        - Sub-grid sampling points (s_x, s_y) per element with bilinear interpolation from nodes.
+        - Sub-grid sampling points per element with bilinear (2D) or trilinear (structured Hex8) interpolation from nodes.
         - Smooth boundary Heaviside threshold function H_beta(rho(x_g) - Psi).
         - Volume-matching bisection to find boundary cut level Psi.
         - Preserves clean 0/1 elements while providing smooth boundary representation on intermediate elements.
@@ -49,7 +51,7 @@ class SEMDOTOptimizer(Optimizer):
         volfrac : float
             Target volume fraction V* / V0.
         n_sub : int
-            Sub-grid discretization points per spatial dimension (default 4 -> 16 points in 2D).
+            Sub-grid discretization points per spatial dimension (default 4 -> 16 points in 2D, 64 in 3D).
         beta_init : float
             Initial Heaviside steepness parameter (default 0.5).
         beta_max : float
@@ -87,6 +89,102 @@ class SEMDOTOptimizer(Optimizer):
         self.extracted_grid: Optional[np.ndarray] = None
         self._prev_sens: Optional[np.ndarray] = None
         self.sens_history: float = 0.5
+        self._rho_nodes: Optional[np.ndarray] = None
+        self._hex = self._hex_topology()
+        self._warned_fallback = False
+
+    # ------------------------------------------------------------------
+    # 3D: nodal density, trilinear sub-grid, fine-grid extraction
+    # ------------------------------------------------------------------
+    def _hex_topology(self) -> Optional[Dict[str, Any]]:
+        """Connectivity and logical node indices of a structured Hex8 mesh; None for any other mesh.
+
+        The corner layout is read from the first element's coordinates, so it does not depend on the mesh's node numbering."""
+        mesh = self.mesh
+        if mesh is None or isinstance(mesh, (StructuredMesh2D, UnstructuredMesh)):
+            return None
+        conn = getattr(mesh, "elements", getattr(mesh, "elems", None))
+        coords = getattr(mesh, "node_coords", getattr(mesh, "nodes", None))
+        if conn is None or coords is None or np.asarray(conn).shape[1] != 8:
+            return None
+        conn = np.asarray(conn, dtype=np.int64)
+        coords = np.asarray(coords, dtype=np.float64)[: int(conn.max()) + 1]  # rigid-body reference nodes are not on the grid
+        first = coords[conn[0]]
+        origin, size = first.min(axis=0), first.max(axis=0) - first.min(axis=0)
+        ijk = np.rint((coords - coords.min(axis=0)) / size).astype(np.int64)
+        return {
+            "conn": conn,
+            "corners": np.rint((first - origin) / size),  # (8, 3) natural coordinates in {0, 1}
+            "ijk": ijk,
+            "shape": tuple(int(v) for v in ijk.max(axis=0)),  # elements along x, y, z
+            "origin": coords.min(axis=0),
+            "size": size,
+        }
+
+    def _trilinear_samples(self, rho_elem: np.ndarray, points_1d: np.ndarray, active: np.ndarray, void_mask: np.ndarray) -> np.ndarray:
+        """Densities at the sub-grid points of the ``active`` elements, (n_active, n_points), from the nodal field.
+
+        A node takes the mean of its non-void elements: a passive-void neighbour is outside the structure and must not pull
+        the boundary density down."""
+        hex_ = self._hex
+        conn = hex_["conn"]
+        use = ~void_mask
+        n_nodes = hex_["ijk"].shape[0]
+        total = np.bincount(conn[use].ravel(), weights=np.repeat(rho_elem[use], conn.shape[1]), minlength=n_nodes)
+        count = np.bincount(conn[use].ravel(), minlength=n_nodes)
+        self._rho_nodes = total / np.maximum(count, 1)
+        c = hex_["corners"]
+        z, y, x = np.meshgrid(points_1d, points_1d, points_1d, indexing="ij")
+        pts = np.column_stack([x.ravel(), y.ravel(), z.ravel()])  # (n_points, 3)
+        shape = np.prod(c[:, None, :] * pts[None, :, :] + (1.0 - c[:, None, :]) * (1.0 - pts[None, :, :]), axis=2)  # (8, n_points)
+        return self._rho_nodes[conn[active]] @ shape
+
+    def fine_density_grid(self, n_sub: Optional[int] = None) -> np.ndarray:
+        """Trilinear nodal density on (nz*n + 1, ny*n + 1, nx*n + 1) points of a structured Hex8 mesh, x varying fastest."""
+        if self._hex is None or self._rho_nodes is None:
+            raise RuntimeError("fine_density_grid needs a structured Hex8 mesh and at least one SEMDOT update")
+        n = self.n_sub if n_sub is None else int(n_sub)
+        nx, ny, nz = self._hex["shape"]
+        ijk = self._hex["ijk"]
+        field = np.zeros((nz + 1, ny + 1, nx + 1), dtype=np.float64)
+        field[ijk[:, 2], ijk[:, 1], ijk[:, 0]] = self._rho_nodes
+        for axis, cells in ((0, nz), (1, ny), (2, nx)):
+            t = np.arange(cells * n + 1) / n
+            i0 = np.minimum(t.astype(np.int64), cells - 1)
+            w = (t - i0).reshape([-1 if a == axis else 1 for a in range(3)])
+            field = (1.0 - w) * np.take(field, i0, axis=axis) + w * np.take(field, i0 + 1, axis=axis)
+        return field
+
+    def extract_grid(self, n_sub: Optional[int] = None) -> np.ndarray:
+        """Binary sub-element design: the fine grid cut at the current threshold ``psi``."""
+        return (self.fine_density_grid(n_sub) >= self.psi).astype(np.float64)
+
+    def extract_isosurface(self, n_sub: Optional[int] = None) -> Tuple[np.ndarray, np.ndarray]:
+        """Smooth boundary (vertices (nv, 3) in mesh coordinates, triangles (nt, 3)): the level ``psi`` of the fine grid.
+
+        The grid is padded with void, so the surface closes at the domain boundary; there it lies up to one fine cell outside
+        the domain (clipping the vertices back would collapse triangles and break the closed surface)."""
+        from skimage.measure import marching_cubes
+
+        n = self.n_sub if n_sub is None else int(n_sub)
+        grid = np.pad(self.fine_density_grid(n), 1, constant_values=0.0)
+        size = self._hex["size"] / n
+        verts, faces, _, _ = marching_cubes(grid, level=self.psi, spacing=(size[2], size[1], size[0]))
+        return verts[:, ::-1] - size + self._hex["origin"], faces
+
+    def _element_fraction(self, cut_samples: np.ndarray, active: Optional[np.ndarray], n_elem: int) -> np.ndarray:
+        """Element volume fraction from the sub-grid values; elements without samples get the void density (passive ones are set later)."""
+        if active is None:
+            return np.mean(cut_samples, axis=1)
+        out = np.full(n_elem, self.rho_min, dtype=np.float64)
+        out[active] = np.mean(cut_samples, axis=1)
+        return out
+
+    def _warn_no_subgrid(self) -> None:
+        if not self._warned_fallback:
+            self._warned_fallback = True
+            warnings.warn("SEMDOT without a structured mesh: samples are offsets of the element density, so no boundary is "
+                          "resolved inside the elements; pass a StructuredMesh2D/3D or a structured Hex8 mesh", stacklevel=3)
 
     def reset(self) -> None:
         """Reset internal optimization state."""
@@ -213,6 +311,7 @@ class SEMDOTOptimizer(Optimizer):
         # 2. Sub-grid Sampling Points Evaluation
         # -------------------------------------------------------------------
         ns = self.n_sub
+        active: Optional[np.ndarray] = None
         if self.mesh is not None and isinstance(self.mesh, StructuredMesh2D):
             # Bilinear interpolation inside each rectangular Q4 element
             # 1D sub-grid coordinates xi, eta in [0, 1]
@@ -240,8 +339,14 @@ class SEMDOTOptimizer(Optimizer):
             elem_node_rho = rho_nodes[elems]
             # Sub-grid point values: (n_elem, ns*ns) = elem_node_rho @ N_mat
             sub_samples = elem_node_rho @ N_mat
+        elif self._hex is not None:
+            target = rho_target.copy()
+            target[solid_mask] = 1.0
+            active = ~(solid_mask | void_mask)
+            sub_samples = self._trilinear_samples(target, np.linspace(0.1, 0.9, ns), active, void_mask)
         else:
             # General mesh fallback: sample around element value with small variation
+            self._warn_no_subgrid()
             offsets = np.linspace(-0.1, 0.1, ns * ns)
             sub_samples = np.clip(rho_target[:, None] + offsets[None, :], self.rho_min, 1.0)
 
@@ -260,7 +365,7 @@ class SEMDOTOptimizer(Optimizer):
             # Evaluate smooth cut fractions
             cut_samples = self.smooth_heaviside_cut(sub_samples, psi_mid, beta_cur)
             # Element volume fraction: average over sub-grid points
-            X_cand = np.mean(cut_samples, axis=1)
+            X_cand = self._element_fraction(cut_samples, active, n_elem)
 
             # Passive elements
             if np.any(solid_mask):
@@ -327,6 +432,7 @@ class SEMDOTOptimizer(Optimizer):
             void_mask[np.asarray(passive_void, dtype=np.int64)] = True
 
         ns = self.n_sub
+        active: Optional[np.ndarray] = None
         if self.mesh is not None and isinstance(self.mesh, StructuredMesh2D):
             xi = np.linspace(0.0, 1.0, ns + 1)
             XI, ETA = np.meshgrid(xi, xi)
@@ -340,13 +446,20 @@ class SEMDOTOptimizer(Optimizer):
             n_nodes = self.mesh.n_nodes
             node_sum = np.zeros(n_nodes, dtype=np.float64)
             node_cnt = np.zeros(n_nodes, dtype=np.float64)
+            rho_target[solid_mask] = 1.0
+            use = ~void_mask  # a passive-void neighbour is outside the structure and must not pull the boundary density down
             for k in range(4):
-                np.add.at(node_sum, elems[:, k], rho_target)
-                np.add.at(node_cnt, elems[:, k], 1.0)
+                np.add.at(node_sum, elems[use, k], rho_target[use])
+                np.add.at(node_cnt, elems[use, k], 1.0)
             rho_nodes = node_sum / np.maximum(node_cnt, 1.0)
             elem_node_rho = rho_nodes[elems]
             sub_samples = elem_node_rho @ N_mat
+        elif self._hex is not None:
+            rho_target[solid_mask] = 1.0
+            active = ~(solid_mask | void_mask)
+            sub_samples = self._trilinear_samples(rho_target, np.linspace(0.0, 1.0, ns + 1), active, void_mask)
         else:
+            self._warn_no_subgrid()
             offsets = np.linspace(-0.05, 0.05, (ns + 1) ** 2)
             sub_samples = np.clip(rho_target[:, None] + offsets[None, :], self.rho_min, 1.0)
 
@@ -356,7 +469,7 @@ class SEMDOTOptimizer(Optimizer):
         for _ in range(60):
             psi_mid = 0.5 * (psi_l + psi_u)
             cut_samples = self.smooth_heaviside_cut(sub_samples, psi_mid, beta_cur)
-            X_cand = np.mean(cut_samples, axis=1)
+            X_cand = self._element_fraction(cut_samples, active, n_elem)
             if np.any(solid_mask):
                 X_cand[solid_mask] = 1.0
             if np.any(void_mask):

@@ -55,6 +55,9 @@ $$\frac{\partial C}{\partial \rho_e} = - \sum_{k=1}^{N_{\text{lc}}} w_k \, p \, 
 - **수렴성**: 임의의 시작점에서 KKT(Karush-Kuhn-Tucker) 정지점(Stationary Point)으로의 엄밀한 수학적 전역 수렴성이 증명됨.
 
 ### 3.3 SEMDOT (Smooth-Edged Material Distribution, Fu & Rolfe 2020)
+
+> **구현 상태 (2026-11-03).** `algorithms/semdot.py`는 2D(`StructuredMesh2D`)와 구조 격자 3D(`StructuredMesh3D`, `structured_hex`)에서 필터링된 밀도를 절점으로 평균하고, 요소마다 축당 `n_sub + 1`개 격자점으로 쌍선형/3선형 보간한 뒤 평활 Heaviside의 평균으로 체적 분율을 만든다. 축당 샘플 수는 `n_sub`로 정한다(`run_topology_optimization` 기본 4, 즉 3D 요소당 125점). 수동 공백 요소는 절점 평균에서 빠진다. 표면은 `fine_density_grid`, `extract_grid`, `extract_isosurface`로 얻는다. 비구조 격자에서는 요소 샘플 방식으로 대체하고 경고를 낸다. `run_topology_optimization`의 SEMDOT 루프는 SIMP 페널티 없는 선형 모듈러스로 해석한다. 비교 기준: 3D 캔틸레버 48x16x8, V 0.3, 60회, 2배 세밀 격자 재해석에서 SEMDOT 40.6, MMA 34.5 (같은 체적). 파라미터 튜닝은 하지 않았다.
+
 - **개념**: 요소 중심의 연속 밀도 대신 요소 꼭짓점(Node)의 매끄러운 형상 함수 보간을 통해 요소 경계를 연속 곡면으로 표현.
 - **경계 분할 및 수치 적분**: 각 Hex8 요소를 8개 하위 셀로 분할하여 경계면 통과 체적을 정밀 적분함으로써 중간 밀도 영역을 원천적으로 제거하고 체커보드 현상을 완벽 차단.
 - **장점**: $0/1$ 경계가 매우 선명하고 후처리 CAD 표면화가 용이함.

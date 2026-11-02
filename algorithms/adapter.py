@@ -460,6 +460,7 @@ class GCMMAAdapter(TopOptAlgorithmAdapter):
         inner_count = 0
         if step_input.eval_fn is not None:
             f0_new, f_new = step_input.eval_fn(xmma.ravel())
+            f0_new = np.atleast_1d(f0_new).reshape(-1, 1)
             f_new_arr = np.atleast_1d(f_new).reshape(-1, 1)
             conserv = concheck(m, epsimin, f0app, f0_new, fapp, f_new_arr)
 
@@ -504,6 +505,7 @@ class GCMMAAdapter(TopOptAlgorithmAdapter):
                     d,
                 )
                 f0_new, f_new = step_input.eval_fn(xmma.ravel())
+                f0_new = np.atleast_1d(f0_new).reshape(-1, 1)
                 f_new_arr = np.atleast_1d(f_new).reshape(-1, 1)
                 conserv = concheck(m, epsimin, f0app, f0_new, fapp, f_new_arr)
 

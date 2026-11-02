@@ -38,9 +38,9 @@
 | :--- | :--- | :--- | :---: | :--- |
 | **순수 내장 엔진** | **SIMP + MMA** | 이동 점근선 근사법 (Svanberg 1987) | 40 ~ 60회 | 전역 안정성, 가장 널리 쓰이는 산업 표준 구배 기반 기법 |
 | | **SIMP + GCMMA** | 보수적 볼록 이동 점근선 (Svanberg 2002) | 35 ~ 50회 | 내부 루프(Inner loop)를 통한 엄밀한 비선형 강건성 |
-| | **SEMDOT** | 평활 위상 미분법 (Smooth-EDO, 2024/2025) | 50 ~ 60회 | 골격 중심선(Skeleton) 자발 형성, 연결성($r_{\min} \ge 2.2h$) |
+| | **SEMDOT** | 요소 내부 격자점 절단 (Fu et al. 2020) | 50 ~ 60회 | 요소 내부 경계, 연결성($r_{\min} \ge 2.2h$), 해석은 페널티 없는 선형 모듈러스 |
 | | **BESO** | 양방향 진화적 구조최적화 (Huang & Xie 2007) | 40 ~ 60회 | 이산적 0/1 직접 제거 및 재생, 비체커보드 진화론적 기준선 |
-| | **SE-AHCA** | 응력-에너지 적응형 HCA (Tovar / 2026) | 25 ~ 40회 | 비구배(Gradient-free) SED+FSD 응력 평탄화 및 초고속 수렴 |
+| | **SE-AHCA** | 응력-에너지 적응형 HCA (Tovar / 2026) | 100회 (`docs/benchmarks/03`) | 비구배(Gradient-free) SED+FSD 응력 평탄화 및 초고속 수렴 |
 | **Kratos 고성능 엔진** | **Kratos + MMA** | Kratos MKL PARDISO + MMA (Svanberg 1987) | 40 ~ 60회 | 대규모 산업용 FEM 연동 표준 벤치마크 |
 | | **Kratos + GCMMA** | Kratos MKL PARDISO + GCMMA (Svanberg 2002) | 35 ~ 50회 | 대규모 자유도 하 비선형 보수적 수렴 안정성 |
 | | **Kratos + SEMDOT**| Kratos MKL PARDISO + SEMDOT (Smooth-EDO) | 50 ~ 60회 | 산업용 대규모 격자 기반 위상 미분 골격 최적화 |
@@ -62,7 +62,7 @@
    - 특징: 주 하중 방향의 굽힘 강성은 극대화되나, 과도 진동 및 편심 비틀림 저항력은 상대적으로 취약할 수 있음.
 2. **과도 동적 등가정하중 최적화 (Model 2: Dynamic F-ESL)**:
    - 시간 영역 적분기(Generalized-$\alpha$ 기법, $\rho_\infty = 0.85$)를 통해 가속/감속 과도 응답 $u(t)$ 해석.
-   - **True F-ESL (Buzaglo 2026)** 수식 적용: $F_{\text{esl}}(t) = \mathbf{K}(\rho) \mathbf{u}_{\text{dyn}}(t)$.
+   - 0차 등가정하중: $F_{\text{esl}}(t) = \mathbf{K}(\rho) \mathbf{u}_{\text{dyn}}(t)$. 현재 구현은 과도 수반 해석이 없어 KKT 보장이 없다 (F-ESL 1차 보정 미구현).
    - 최대 변위 및 과도 천이 시점의 4~6개 핵심 시간 스텝을 등가 정적 하중으로 변환하여 다중 컴플라이언스 최적화.
    - 특징: 주 굽힘 강성을 약간 양보하는 대신, **사선 크로스 브레이싱(X-Rib)을 스스로 구축하여 비틀림 처짐 및 잔류 진동을 60% 이상 격감**.
 
@@ -132,12 +132,11 @@
 모든 예제 산출물은 통일된 폴더 규칙과 파일 형식을 유지합니다.
 
 #### 1. 폴더 저장 경로 표준
-- 1차 산출물 저장소: `wht_topopt/examples/outputs/<ex_name>/`
-- AI-Eng 워크벤치 미러: `aieng/examples/output/<ex_name>/`
-- 브레인 아티팩트 미러: `<appDataDir>/brain/<conversation_id>/`
+- 산출물 저장소: `wht_topopt/examples/outputs_v1/<ex_name>/`, 그 아래 `pillar1_...`~`pillar6_...` 폴더와 `manifest.json`
+- `manifest.json`에는 Pillar별 실행 여부와, 실행하지 않은 Pillar의 이유를 적는다.
 
 #### 2. 파일 명명 규칙 (File Naming Conventions)
-- **파이썬 마스터 스크립트**: `wht_topopt/examples/exNN_<name>_benchmark.py`
+- **예제 스크립트**: `wht_topopt/examples/src_v1/exNN_<name>/exNN[a-z]_<name>.py` (문제 정의만, 실행은 `src_v1/common/`의 Pillar 모듈)
 - **3D 형상 모델**:
   - `robot_arm_rib_static.stl` / `robot_arm_rib_dynamic.stl` / `robot_arm_rib_dynamic_plus.stl`
   - (100% Watertight Marching Cubes 바이너리 STL 포맷)
@@ -172,12 +171,16 @@
 
 ## 3. 예제별 적용 현황 및 확장 로드맵 (Roadmap)
 
+> ex00~ex06은 해당하는 Pillar만 적용하고, 제외한 Pillar의 이유를 `manifest.json`에 적는다. ex07, ex09는 6개 Pillar 전부를 적용한다.
+
 | 예제 번호 | 대상 부품 | 현재 적용 단계 | 완료 항목 및 다음 진행 과제 |
 | :---: | :--- | :---: | :--- |
-| **ex09** | **휴머노이드 로봇 암 (Robot Arm)** | **Pillar 1~6 완료/진행 중** | • Model 1 & 2 완료 ($V=28\%$) <br>• Model 3-Plus ($V=35\%$) 최적화 & 종합 HTML 리포트 생성 중 |
-| **ex07** | **GE 항공기 엔진 브라켓 (GE Bracket)** | **Pillar 1 완료, 2~6 확장 예정** | • MC80 4대 알고리즘(GCMMA, MMA, SEMDOT, Kratos) 완료 임박 <br>• 항공기 돌풍(Gust) 과도 동적 하중 케이스 및 동적 뷰어 구축 예정 |
-| **ex08** | **eVTOL 쿼드콥터 프레임 (Quadcopter)** | **대기 중** | • 4개 로터 추력 동적 진동 및 Z축 압출 리브 구조 적용 예정 |
-| **ex10** | **전기차 파워 인버터 마운트 (Inverter)** | **대기 중** | • 노면 충격 진동 하중 및 바닥 방열판 리브 필터 적용 예정 |
+| **ex00** | **2D 기본 (a 캔틸레버, b L-브라켓, c MBB)** | **Pillar 1, 5, 6** | • `common` 모듈로 재작성, 전체 해상도 결과 저장 |
+| **ex01~ex06** | **응력 L-브라켓, 좌굴, 3D 캔틸레버·제조, 메타물질, MuJoCo 링크, 컴플라이언트 메커니즘** | **이전** | • 기존 코드를 옮기고 출력 경로만 변경, `common` 재작성은 다음 과제 |
+| **ex07** | **GE 항공기 엔진 브라켓 (GE Bracket)** | **Pillar 1~6 코드 작성** | • 구 ex07, ex08 Kratos, ex11 GE 통합. 스모크와 전체 실행은 남음. Kratos 경로는 미실행으로 기록 |
+| **ex08** | **eVTOL 쿼드콥터 프레임 (Quadcopter)** | **대기 중** | • 소스 없음 |
+| **ex09** | **휴머노이드 로봇 암 (Robot Arm)** | **Pillar 1~6 코드 작성** | • 구 ex09, ex11 로봇 암 통합. 스모크와 전체 실행은 남음 |
+| **ex10** | **전기차 파워 인버터 마운트 (Inverter)** | **대기 중** | • 소스 없음 |
 
 ---
 

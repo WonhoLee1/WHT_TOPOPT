@@ -20,12 +20,13 @@ Flexible Multibody Kinematics (FFRF) and Planar Skin-Rib Extrusion for a high-sp
 - Dynamic Time-Integration Solvers:
   1. Built-in Generalized-alpha (Chung & Hulbert 1993, rho_infinity=0.85, 2nd-order, Intel MKL PARDISO)
   2. Kratos Native Bossak-alpha (KratosMultiphysics.ResidualBasedBossakDisplacementScheme, AMGCL)
-- True F-ESL & Skin-Rib Integrated Architecture:
+- ESL with heuristic first-order correction & Skin-Rib Integrated Architecture:
   - PlanarRibExtrusionFilter: -Z bottom plate + +/-Y side walls + crisp interior rib network
   - Dynamic Time-Integration: M(rho) * u''(t) + C(rho) * u'(t) + K(rho) * u(t) = f_ext(t)
   - Critical Time Step Extraction: peak strain energy, peak tip deflection, peak deceleration shock
   - Equivalent Static Load Synthesis: f_eq(t_k) = K(rho) * u_dyn(t_k)
-  - Buzaglo & Pollini (2026) 1st-Order KKT Gradient Correction: g_FESL = grad(c_static) + delta_inertial + delta_damping
+  - Heuristic first-order correction inspired by Buzaglo & Pollini (2026): g = grad(c_static) + delta_inertial + delta_damping,
+    evaluated at single instants without a transient adjoint (no KKT guarantee; not the exact F-ESL gradient)
 - Deliverables in outputs_v1/ex09_robot_arm/:
   (a) 100% Watertight binary STL: robot_arm_3d.stl (open edges = 0 verified)
   (b) PyVista 3D Discrete Hex8 Voxel progression GIF: robot_arm_progression.gif (Paraview Black theme, edges #202020, 12pt monospace text)
@@ -93,6 +94,13 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
+from wht_topopt.core.time_integration import (
+    check_time_step,
+    du_olhoff_mass_density,
+    du_olhoff_mass_derivative,
+    generalized_alpha_rhs,
+    newmark_update,
+)
 from wht_topopt.algorithms import MMAOptimizer, StressEnergyAdaptiveHCA, SEAHCAConfig
 from wht_topopt.core.fem import FEMEngine
 from wht_topopt.core.filter import DensityFilter
@@ -219,7 +227,7 @@ class BaseDynamicESLSolver:
         domain: RobotArmDomain3D,
         fem: FEMEngine,
         t_total: float = 0.05,  # 50 ms
-        n_steps: int = 30,
+        n_steps: int = 240,  # 50 ms at omega_1 dt <= 0.5 for f1 up to about 350 Hz
         theta_max: float = np.pi / 2.0,  # 90 degrees slewing
         m_payload_kg: float = 1.5,       # 1.5 kg payload
     ) -> None:
@@ -317,10 +325,10 @@ class BaseDynamicESLSolver:
         idx_brake_max = int(np.argmin(self.alpha))
 
         crit_set = {idx_se_max, idx_tip_max, idx_acc_max, idx_brake_max}
-        for cand in [7, 15, 22, 10, 20, 5, 25, 12, 18]:
+        for frac in (0.24, 0.52, 0.76, 0.34, 0.69, 0.17, 0.86, 0.41, 0.62):  # evenly spread fill-ins, whatever n_steps is
             if len(crit_set) >= 4:
                 break
-            crit_set.add(cand)
+            crit_set.add(int(round(frac * (self.n_steps - 1))))
         return sorted(list(crit_set))[:4]
 
     def compute_equivalent_static_loads(
@@ -347,7 +355,7 @@ class BuiltinGeneralizedAlphaDynamicSolver(BaseDynamicESLSolver):
         fem: FEMEngine,
         rho_inf: float = 0.85,
         t_total: float = 0.05,
-        n_steps: int = 30,
+        n_steps: int = 240,  # 50 ms at omega_1 dt <= 0.5 for f1 up to about 350 Hz
         theta_max: float = np.pi / 2.0,
         m_payload_kg: float = 1.5,
     ) -> None:
@@ -410,21 +418,9 @@ class BuiltinGeneralizedAlphaDynamicSolver(BaseDynamicESLSolver):
             f_prev = self.f_ext_history[s - 1, free]
             f_mid = (1.0 - alpha_f) * f_curr + alpha_f * f_prev
 
-            p_term = (
-                M_ff @ ((1.0 - alpha_m) / (beta * (dt**2)) * u_f +
-                        (1.0 - alpha_m) / (beta * dt) * v_f +
-                        (1.0 - alpha_m) * (1.0 - 2.0 * beta) / (2.0 * beta) * a_f) +
-                C_ff @ ((1.0 - alpha_f) * gamma / (beta * dt) * u_f +
-                        (1.0 - alpha_f) * (gamma / beta - 1.0) * v_f +
-                        (1.0 - alpha_f) * dt * (gamma / (2.0 * beta) - 1.0) * a_f) -
-                alpha_f * (K_ff @ u_f)
-            )
-
-            r_hat = f_mid + p_term
+            r_hat = generalized_alpha_rhs(M_ff, C_ff, K_ff, u_f, v_f, a_f, f_mid, dt, alpha_m, alpha_f, beta, gamma)
             u_next = self.pardiso_solver.solve(K_hat_ff, r_hat)
-
-            a_next = (u_next - u_f) / (beta * (dt**2)) - v_f / (beta * dt) - (1.0 - 2.0 * beta) / (2.0 * beta) * a_f
-            v_next = v_f + dt * ((1.0 - gamma) * a_f + gamma * a_next)
+            v_next, a_next = newmark_update(u_f, v_f, a_f, u_next, dt, beta, gamma)
 
             u_f, v_f, a_f = u_next, v_next, a_next
             u_dyn_history[s, free] = u_f
@@ -449,7 +445,7 @@ class KratosBossakImplicitDynamicSolver(BaseDynamicESLSolver):
         fem: FEMEngine,
         alpha_bossak: float = -0.05,
         t_total: float = 0.05,
-        n_steps: int = 30,
+        n_steps: int = 240,  # 50 ms at omega_1 dt <= 0.5 for f1 up to about 350 Hz
         theta_max: float = np.pi / 2.0,
         m_payload_kg: float = 1.5,
     ) -> None:
@@ -580,7 +576,7 @@ class KratosBossakImplicitDynamicSolver(BaseDynamicESLSolver):
 
 
 class RobotArmFESLOptimizer3D:
-    """Master 3D Dynamic Robot Arm Topology Optimizer with True ESL & Buzaglo & Pollini 2026 F-ESL."""
+    """Master 3D Dynamic Robot Arm Topology Optimizer with ESL & a heuristic first-order correction (no transient adjoint)."""
 
     def __init__(
         self,
@@ -718,7 +714,7 @@ class RobotArmFESLOptimizer3D:
             # 2. Assemble Global Mass M(rho) and Stiffness K(rho)
             t_fem0 = time.perf_counter()
             youngs = self.emin + (rho_phys ** self.penal) * (self.e0 - self.emin)
-            rho_elem_mass = (rho_phys * self.rho_mat)
+            rho_elem_mass = du_olhoff_mass_density(rho_phys) * self.rho_mat
             K = self.fem.assemble_K(youngs)
             M = self.fem.assemble_M(rho_elem_mass)
 
@@ -746,32 +742,25 @@ class RobotArmFESLOptimizer3D:
                 tip_nid = self.domain.loaded_nodes[0]
                 u_dyn_init_tuple = (u_dyn_hist[:, 3 * tip_nid + 1].copy(), u_dyn_hist[:, 3 * tip_nid + 2].copy())
 
+            if it == 1:
+                check_time_step(K[free, :][:, free], M[free, :][:, free], self.dyn_solver.dt)
+
             # 4. Equivalent Static Loads (ESL)
             t_static0 = time.perf_counter()
             f_eq_cases = self.dyn_solver.compute_equivalent_static_loads(K, u_dyn_hist, crit_indices)
             n_crit = len(crit_indices)
 
-            # 5. Solve Static Multi-Load Sub-Problem for compliance & sensitivities
-            K_ff = K[free, :][:, free].tocsr()
-            F_ff = np.asfortranarray(f_eq_cases[:, free].T, dtype=np.float64)
-            u_ff = self.pardiso_static.solve(K_ff, F_ff)
-            u_static_cases = np.zeros((n_crit, self.domain.ndof), dtype=float)
-            u_static_cases[:, free] = u_ff.T
+            # 5. Static sub-problem. K u = f_eq = K u_dyn(t_k) gives u = u_dyn(t_k) on the free dofs, so no solve is needed
+            u_static_cases = u_dyn_hist[crit_indices].copy()
             t_static = time.perf_counter() - t_static0
             t_fem = t_assembly + t_static
 
-            # 6. F-ESL Multi-Load Compliance
-            w_cases = np.array([0.30, 0.25, 0.30, 0.15])
-            if n_crit < 4:
-                w_cases = np.full(n_crit, 1.0 / n_crit)
-
-            total_compliance = 0.0
-            c_e_cases = np.zeros((n_crit, self.domain.n_elem), dtype=float)
-            for k in range(n_crit):
-                uk = u_static_cases[k]
-                ck = float(np.dot(f_eq_cases[k], uk))
-                total_compliance += w_cases[k] * ck
-                c_e_cases[k] = self.fem.compute_unit_element_compliance(uk)
+            # 6. Multi-load compliance. Weights w_k ~ SE(t_k) dt (plan S06; dt is uniform), held fixed within the iteration
+            case_energy = np.array([float(np.dot(f_eq_cases[k], u_static_cases[k])) for k in range(n_crit)])
+            energy_sum = float(case_energy.sum())
+            w_cases = case_energy / energy_sum if energy_sum > 0.0 else np.full(n_crit, 1.0 / n_crit)
+            total_compliance = float(w_cases @ case_energy)
+            c_e_cases = np.stack([self.fem.compute_unit_element_compliance(u_static_cases[k]) for k in range(n_crit)])
 
             # 7. Sensitivity Analysis & Optimizer Step
             t_sens0 = time.perf_counter()
@@ -783,7 +772,7 @@ class RobotArmFESLOptimizer3D:
                     strain_energy_cases=sed_cases,
                     von_mises_unpenalized_cases=sigma_vm_cases,
                     case_weights=w_cases,
-                    neighborhood_filter_fn=self.rib_filter.forward,
+                    neighborhood_filter_fn=self.rib_filter.smooth_signal,
                 )
                 t_sens = time.perf_counter() - t_sens0
 
@@ -808,6 +797,7 @@ class RobotArmFESLOptimizer3D:
                 Me0 = self.fem.Me0
                 Ke0 = self.fem.Ke0
                 dK_factor = self.penal * (rho_phys ** (self.penal - 1.0)) * (self.e0 - self.emin)
+                dm_drho = du_olhoff_mass_derivative(rho_phys) * self.rho_mat
 
                 for k in range(n_crit):
                     idx_k = crit_indices[k]
@@ -815,7 +805,8 @@ class RobotArmFESLOptimizer3D:
                     c_e_k = c_e_cases[k]
                     df_dphys += -w_cases[k] * dK_factor * c_e_k
 
-                    # Buzaglo & Pollini (2026) 1st-Order Inertial & Damping Sensitivities
+                    # Heuristic single-instant inertial and damping terms inspired by Buzaglo & Pollini (2026). u_k stands in
+                    # for the adjoint: there is no transient adjoint and no KKT residual, so this is not the exact F-ESL gradient
                     if a_dyn_hist is not None and v_dyn_hist is not None:
                         ak = a_dyn_hist[idx_k]
                         vk = v_dyn_hist[idx_k]
@@ -824,11 +815,11 @@ class RobotArmFESLOptimizer3D:
                         v_e_k = vk[self.mesh.edofMat]
 
                         # 1. Inertial correction
-                        Me_ae = (a_e_k @ Me0) * self.rho_mat
+                        Me_ae = (a_e_k @ Me0) * dm_drho[:, None]
                         delta_inertial_k = -np.sum(u_e_k * Me_ae, axis=1)
 
                         # 2. Rayleigh Damping correction
-                        Me_ve = (v_e_k @ Me0) * self.rho_mat
+                        Me_ve = (v_e_k @ Me0) * dm_drho[:, None]
                         Ke_ve = v_e_k @ Ke0
                         alpha_R = getattr(self.dyn_solver, "alpha_rayleigh", 5.0)
                         beta_R = getattr(self.dyn_solver, "beta_rayleigh", 1e-5)
@@ -886,8 +877,7 @@ class RobotArmFESLOptimizer3D:
             current_vol = float(np.sum(rho_phys * self.mesh.elem_volumes)) / self.vol_total
 
             # 8. Stress & Dynamic Tip Displacement Monitoring
-            u_peak = u_static_cases[0]
-            _, vm = self.fem.compute_element_stresses(u_peak, E0=self.e0)
+            vm = self.fem.compute_element_von_mises_batch(u_static_cases, E0=self.e0).max(axis=0)  # over every critical instant
             vm_phys = (rho_phys ** 0.5) * vm
 
             solid_mask = (rho_phys >= 0.5) & solid_design_mask
@@ -1527,7 +1517,7 @@ def build_comprehensive_master_report_html(
       <h1>휴머노이드 로봇 암 50ms Dynamic F-ESL 다축 동적 벤치마크 마스터 리포트</h1>
       <p style="margin:0; color:#8b949e; font-size:13px;">
         50ms S-Curve 고속 회전 슬루잉(&omega;<sub>max</sub>=62.8 rad/s, &alpha;<sub>max</sub>=&plusmn;3,947 rad/s<sup>2</sup>) 하중 하에서
-        Buzaglo &amp; Pollini (2026) 1차 동등정하중(F-ESL)과 스킨-리브 일체형 최적화 및 계산 시간 정량 계측
+        ESL + 단일 시점 휴리스틱 1차 보정 (Buzaglo &amp; Pollini 2026 참고, 과도 수반 해석 없음)과 스킨-리브 일체형 최적화 및 계산 시간 정량 계측
       </p>
     </header>
 

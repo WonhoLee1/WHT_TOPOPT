@@ -495,6 +495,15 @@ class PlanarRibExtrusionFilter(FilterOperator):
         """Update Heaviside continuation sharpness parameter beta."""
         self.beta = max(1.0, float(beta))
 
+    def smooth_signal(self, signal: np.ndarray) -> np.ndarray:
+        """Average a cell signal over the rib columns and the 2D filter radius, without projection or clipping.
+
+        ``forward`` is for densities: its Heaviside and its bounds would saturate a signal that may exceed 1."""
+        out = np.array(signal, dtype=np.float64)
+        col_mean = out[np.asarray(self.cols_3d)].mean(axis=1)
+        out[np.asarray(self.cols_3d)] = (self.H_2d @ col_mean)[:, None]
+        return out
+
     def forward(self, rho: np.ndarray) -> np.ndarray:
         """Forward projection: 3D Blueprint -> 2D Core Avg -> 2D Filter -> Heaviside -> 3D Extrusion.
 

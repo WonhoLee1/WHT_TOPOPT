@@ -1,5 +1,7 @@
 # Anti-Mocking Protocol & Numerical Integrity Verification
 
+> **주의 (2026-11-03).** 이 문서의 수치는 코드 리뷰(`docs/references/investigations/code_review_wht_topopt_20261103.md`) 수정 전 결과이며 재생성이 필요하다. 해당 결함: 3절 에너지 변동 수치를 재현하는 코드를 찾지 못했고, Generalized-alpha 식 자체가 틀렸다(R1). ex07의 단계별 시간은 측정값이 아니었다.
+
 > 본 문서는 사용자 규칙 제6항 **"구현 눈속임 금지 및 무결성 검증 원칙(Anti-Mocking & Integrity Protocol)"**에 따라, `wht_topopt` 프레임워크 전반에 구현된 모든 물리 및 수치해석 코드가 난수, 더미 상수, 가짜 모킹(Mocking) 없이 공인된 역학 이론과 엄밀한 수치 적분에 기반하여 구축되었음을 증명하는 무결성 검증 보고서입니다.
 
 ---
