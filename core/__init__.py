@@ -61,6 +61,19 @@ from .stl_domain import (
     ProgressGif,
 )
 
+from .tetra_assembler import (
+    TetraMesh,
+    TetraFEASolver,
+    assemble_tetra_elements,
+    calculate_tetra_von_mises,
+)
+
+from .tetra_mesher import (
+    mesh_stl_tetra,
+    tag_nodes_near_stl,
+    build_tetra_density_filter,
+)
+
 __all__ = [
     # Mesh
     "StructuredMesh2D",
@@ -111,4 +124,13 @@ __all__ = [
     "BuiltinAdapter",
     "run_topology_optimization",
     "ProgressGif",
+    # Tetrahedral Assembler & Solver
+    "TetraMesh",
+    "TetraFEASolver",
+    "assemble_tetra_elements",
+    "calculate_tetra_von_mises",
+    # Tetrahedral Mesher & Filter
+    "mesh_stl_tetra",
+    "tag_nodes_near_stl",
+    "build_tetra_density_filter",
 ]

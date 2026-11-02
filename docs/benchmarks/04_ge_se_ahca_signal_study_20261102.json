@@ -1,0 +1,41 @@
+[
+  {
+    "mass_g": 235.11,
+    "compliance_per_case_Nmm": [
+      3509551528.2,
+      4169251048.7,
+      2422676052.7,
+      1148028413.1
+    ],
+    "weighted_compliance_Nmm": 3286918953.8,
+    "vm_max_per_case_MPa": [
+      1012.2,
+      971.6,
+      895.7,
+      519.0
+    ],
+    "vm_p995_per_case_MPa": [
+      684.0,
+      755.2,
+      574.9,
+      425.1
+    ],
+    "worst_vm_max_MPa": 1012.2,
+    "worst_vm_p995_MPa": 755.2,
+    "safety_factor": 1.2,
+    "passes_yield_max": false,
+    "passes_yield_p995": true,
+    "algo": "se_ahca",
+    "name": "SE-AHCA [base]",
+    "iterations": 100,
+    "t_fem_sec": 1099.36,
+    "t_sens_sec": 53.54,
+    "t_opt_sec": 2.2,
+    "t_total_sec": 1165.97,
+    "time_per_step_ms": 11659.7,
+    "variant": "base",
+    "options": "rho^p | no projection | no density filter | smoothing=moving_average",
+    "grayness_inside": 0.0009,
+    "final_weighted_comp_history": 11255958617.9
+  }
+]
