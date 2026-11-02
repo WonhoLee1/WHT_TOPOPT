@@ -1,0 +1,78 @@
+[
+  {
+    "mass_g": 570.14,
+    "compliance_per_case_Nmm": [
+      2267997909.1,
+      7175544721.6,
+      1725556824.3,
+      301114742.9
+    ],
+    "weighted_compliance_Nmm": 3680462759.9,
+    "vm_max_per_case_MPa": [
+      633.2,
+      1376.9,
+      614.0,
+      284.1
+    ],
+    "vm_p995_per_case_MPa": [
+      435.0,
+      836.9,
+      384.7,
+      173.9
+    ],
+    "worst_vm_max_MPa": 1376.9,
+    "worst_vm_p995_MPa": 836.9,
+    "safety_factor": 1.08,
+    "passes_yield_max": false,
+    "passes_yield_p995": true,
+    "algo": "mma",
+    "name": "MMA (Svanberg 1987)",
+    "iterations": 2,
+    "t_fem_sec": 5.07,
+    "t_sens_sec": 1.45,
+    "t_opt_sec": 0.72,
+    "t_total_sec": 7.25,
+    "time_per_step_ms": 3624.0,
+    "is_watertight": true,
+    "stl_verts": 2696,
+    "stl_faces": 5480
+  },
+  {
+    "mass_g": 570.14,
+    "compliance_per_case_Nmm": [
+      1564670146.1,
+      1370056184.6,
+      770689232.4,
+      258908805.4
+    ],
+    "weighted_compliance_Nmm": 1207182942.8,
+    "vm_max_per_case_MPa": [
+      496.4,
+      350.9,
+      307.9,
+      255.5
+    ],
+    "vm_p995_per_case_MPa": [
+      302.6,
+      284.5,
+      209.5,
+      170.1
+    ],
+    "worst_vm_max_MPa": 496.4,
+    "worst_vm_p995_MPa": 302.6,
+    "safety_factor": 2.98,
+    "passes_yield_max": true,
+    "passes_yield_p995": true,
+    "algo": "se_ahca",
+    "name": "SE-AHCA (Fu & Tovar 2025/2026)",
+    "iterations": 2,
+    "t_fem_sec": 4.83,
+    "t_sens_sec": 0.45,
+    "t_opt_sec": 0.1,
+    "t_total_sec": 7.62,
+    "time_per_step_ms": 3808.8,
+    "is_watertight": true,
+    "stl_verts": 2255,
+    "stl_faces": 4534
+  }
+]

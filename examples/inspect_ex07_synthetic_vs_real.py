@@ -10,12 +10,11 @@ import sys
 import numpy as np
 
 ROOT = Path(__file__).resolve().parents[2]
-AIENG_SRC = ROOT / "aieng" / "src"
-if str(AIENG_SRC) not in sys.path:
-    sys.path.insert(0, str(AIENG_SRC))
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 from wht_topopt.core.voxelizer import voxelize_ge_aircraft_bracket
-from aieng.topopt.stl_domain import StlCase, build_stl_problem
+from wht_topopt.core.stl_domain import StlCase, build_stl_problem
 
 def inspect():
     print("=" * 80)

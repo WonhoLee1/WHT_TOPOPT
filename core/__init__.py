@@ -45,6 +45,35 @@ from .continuation import ContinuationScheduler
 
 from .boundary import BoundaryConditionManager
 
+from .stl_domain import (
+    Mesh,
+    structured_hex,
+    StlCase,
+    build_stl_problem,
+    inside_grid,
+    read_stl,
+    RigidBody,
+    LoadCase,
+    TopOptProblem,
+    TopOptEvaluator,
+    BuiltinAdapter,
+    run_topology_optimization,
+    ProgressGif,
+)
+
+from .tetra_assembler import (
+    TetraMesh,
+    TetraFEASolver,
+    assemble_tetra_elements,
+    calculate_tetra_von_mises,
+)
+
+from .tetra_mesher import (
+    mesh_stl_tetra,
+    tag_nodes_near_stl,
+    build_tetra_density_filter,
+)
+
 __all__ = [
     # Mesh
     "StructuredMesh2D",
@@ -81,4 +110,27 @@ __all__ = [
     "ContinuationScheduler",
     # Boundary Conditions
     "BoundaryConditionManager",
+    # STL Domain & Hex8 TopOpt Core
+    "Mesh",
+    "structured_hex",
+    "StlCase",
+    "build_stl_problem",
+    "inside_grid",
+    "read_stl",
+    "RigidBody",
+    "LoadCase",
+    "TopOptProblem",
+    "TopOptEvaluator",
+    "BuiltinAdapter",
+    "run_topology_optimization",
+    "ProgressGif",
+    # Tetrahedral Assembler & Solver
+    "TetraMesh",
+    "TetraFEASolver",
+    "assemble_tetra_elements",
+    "calculate_tetra_von_mises",
+    # Tetrahedral Mesher & Filter
+    "mesh_stl_tetra",
+    "tag_nodes_near_stl",
+    "build_tetra_density_filter",
 ]

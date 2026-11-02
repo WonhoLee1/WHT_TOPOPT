@@ -21,11 +21,10 @@ pv.set_plot_theme("document")
 pv.global_theme.window_size = [1600, 1100]
 
 ROOT = Path(__file__).resolve().parents[2]
-AIENG_SRC = ROOT / "aieng" / "src"
-if str(AIENG_SRC) not in sys.path:
-    sys.path.insert(0, str(AIENG_SRC))
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
-from aieng.topopt.stl_domain import StlCase, build_stl_problem
+from wht_topopt.core.stl_domain import StlCase, build_stl_problem
 
 
 def get_mesh_grid_and_origin():

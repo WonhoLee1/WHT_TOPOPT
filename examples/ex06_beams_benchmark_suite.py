@@ -72,6 +72,7 @@ from wht_topopt.core.fem import FEMEngine
 from wht_topopt.core.filter import DensityFilter
 from wht_topopt.core.interpolation import SIMP
 from wht_topopt.core.mesh import StructuredMesh2D, StructuredMesh3D
+from wht_topopt.core.projection import HeavisideProjection
 from wht_topopt.manufacturing.extrusion import ExtrusionFilter
 from wht_topopt.solvers.frontistr_adapter import FrontISTRSolver
 from wht_topopt.solvers.kratos_solver import KratosSolver
@@ -766,26 +767,85 @@ class OptimizationSuite:
     def run_se_ahca(
         self,
         spec: ProblemSpec,
-        max_iters: int = 50,
+        max_iters: int = 100,
         tol: float = 0.005,
+        signal_mode: str = "rho_pm1",
+        projection: bool = True,
+        smoothing: str = "density_filter",
+        sigma_mode: str = "relative",
+        penal: float = 3.0,
+        beta_init: float = 1.0,
+        beta_max: float = 8.0,
+        beta_interval: int = 20,
     ) -> MethodRunRecord:
-        """Run SE-AHCA (Stress-Energy Adaptive Hybrid Cellular Automata)."""
+        """Run SE-AHCA (Stress-Energy Adaptive Hybrid Cellular Automata).
+
+        The defaults are the refactored configuration (docs/references/investigations/
+        se_ahca_improvement_study_from_aieng_20261102.md). The legacy configuration (unit-energy signal, no
+        projection, double smoothing, dimensional sigma_allow) stays reachable through the options so the stage-by-stage
+        ablation in ``ex06_se_ahca_ablation.py`` can reproduce it.
+
+        Args:
+            spec: Problem definition (2D or 3D beam).
+            max_iters: Number of SE-AHCA iterations (>= 100 recommended for the PID gains 0.02~0.38).
+            tol: Early-stop threshold on the max design change (use 0.0 to force all ``max_iters``).
+            signal_mode: Cell signal energy term passed to the HCA, divided by element volume inside the engine.
+                "unit"    : u0 = u_e^T K0 u_e (density independent, legacy)
+                "rho_pm1" : rho_phys^(p-1) * u0 (SIMP sensitivity form; positive feedback towards 0/1)
+                "rho_p"   : rho_phys^p * u0 (penalised element strain energy, the form ex07 uses)
+            projection: If True, rho_phys = Heaviside(filter(xi)) and the same chain is handed to ``hca.step`` as
+                ``forward_projection_fn`` so the volume bisection runs on the projected density.
+            smoothing: Single/double signal smoothing.
+                "density_filter" : spatial filter on the signal only (history_window = 1)
+                "moving_average" : 2-step moving average only (no spatial filter on the signal)
+                "both"           : legacy, both applied
+            sigma_mode: "relative" -> sigma_allow = 0 (engine uses the 90th percentile of the current relaxed von Mises,
+                unit independent: this problem is E=1, F=1 so no physical yield exists); "legacy" -> SEAHCAConfig default
+                250e6 (dimensional, effectively switches the stress term off for this problem).
+            penal: SIMP penalty p used for the solve and the signal exponent.
+            beta_init: Initial Heaviside sharpness beta.
+            beta_max: Maximum Heaviside beta.
+            beta_interval: beta is doubled every ``beta_interval`` iterations until ``beta_max``.
+
+        Returns:
+            MethodRunRecord whose compliance/volume/grayness are evaluated on the returned ``rho_phys`` (one extra solve).
+        """
+        if signal_mode not in ("unit", "rho_pm1", "rho_p"):
+            raise ValueError(f"Unknown signal_mode: {signal_mode}")
+        if smoothing not in ("both", "density_filter", "moving_average"):
+            raise ValueError(f"Unknown smoothing: {smoothing}")
+        if sigma_mode not in ("relative", "legacy"):
+            raise ValueError(f"Unknown sigma_mode: {sigma_mode}")
+
         fem = FEMEngine(spec.mesh, e0=spec.e0, emin=1e-3, nu=spec.nu)
         d_filt = DensityFilter(spec.mesh, rmin=spec.rmin)
         ext_filt = ExtrusionFilter(spec.mesh, extrusion_axis=spec.ext_axis) if spec.ext_axis else None
+        heaviside = HeavisideProjection(beta=beta_init, eta=0.5)
 
-        cfg = SEAHCAConfig(
+        cfg_kwargs: Dict[str, Any] = dict(
             volfrac_target=spec.volfrac,
             stress_weight_eta=0.30,  # Balanced compliance & peak stress leveling
             kp_init=0.18,
             ki=0.03,
             kd=0.02,
             move_limit=0.18,
+            history_window=1 if smoothing == "density_filter" else 2,
         )
+        if sigma_mode == "relative":
+            cfg_kwargs["sigma_allow"] = 0.0
+        cfg = SEAHCAConfig(**cfg_kwargs)
         hca = StressEnergyAdaptiveHCA(
             elem_volumes=spec.mesh.elem_volumes,
             config=cfg,
         )
+        signal_filter_fn = d_filt.forward if smoothing in ("both", "density_filter") else None
+
+        def physical_density(x: np.ndarray) -> np.ndarray:
+            """Design variable -> physical density: density filter -> (extrusion) -> (Heaviside at current beta)."""
+            rho_f = d_filt.forward(x)
+            if ext_filt:
+                rho_f = ext_filt.forward(rho_f)
+            return heaviside.forward(rho_f) if projection else rho_f
 
         rho = np.full(spec.mesh.n_elem, spec.volfrac, dtype=np.float64)
 
@@ -797,24 +857,33 @@ class OptimizationSuite:
         t_suite_start = time.perf_counter()
 
         for it in range(1, max_iters + 1):
-            rho_phys = ext_filt.forward(d_filt.forward(rho)) if ext_filt else d_filt.forward(rho)
+            if projection:
+                heaviside.beta = min(beta_max, beta_init * 2.0 ** ((it - 1) // beta_interval))
+            rho_phys = physical_density(rho)
 
-            u, c_val, _, t_fem_step = self.solvers.solve_system(fem, spec, np.maximum(rho_phys, 1e-3), penal=3.0)
+            u, c_val, _, t_fem_step = self.solvers.solve_system(fem, spec, np.maximum(rho_phys, 1e-3), penal=penal)
             timing.t_fem += t_fem_step
 
             t_sens0 = time.perf_counter()
             ce = fem.compute_unit_element_compliance(u)
             _, vm = fem.compute_element_stresses(u)
+            rho_floor = np.maximum(rho_phys, 1e-3)
+            if signal_mode == "rho_pm1":
+                energy = rho_floor ** (penal - 1.0) * ce
+            elif signal_mode == "rho_p":
+                energy = rho_floor ** penal * ce
+            else:
+                energy = ce
             cell_signal, _ = hca.compute_cell_state_signal(
                 rho_phys,
-                strain_energy_cases=ce,
+                strain_energy_cases=energy,
                 von_mises_unpenalized_cases=vm,
-                neighborhood_filter_fn=d_filt.forward,
+                neighborhood_filter_fn=signal_filter_fn,
             )
             timing.t_sens += (time.perf_counter() - t_sens0)
 
             t_opt0 = time.perf_counter()
-            rho_new, _, _ = hca.step(rho, cell_signal)
+            rho_new, _, _ = hca.step(rho, cell_signal, forward_projection_fn=physical_density if projection else None)
             timing.t_opt += (time.perf_counter() - t_opt0)
 
             change = float(np.max(np.abs(rho_new - rho)))
@@ -831,8 +900,11 @@ class OptimizationSuite:
                 converged = True
                 break
 
+        # Evaluate the returned design: the loop's last solve belongs to the density *before* the last update.
+        rho_phys = physical_density(rho)
+        u, c_val, _, t_fem_step = self.solvers.solve_system(fem, spec, np.maximum(rho_phys, 1e-3), penal=penal)
+        timing.t_fem += t_fem_step
         timing.t_total = time.perf_counter() - t_suite_start
-        rho_phys = ext_filt.forward(d_filt.forward(rho)) if ext_filt else d_filt.forward(rho)
 
         label = "SE-AHCA" + (" [2.5D Extruded]" if spec.ext_axis else " [Free 3D]" if spec.dim == 3 else " [2D High-Res]")
         return MethodRunRecord(
@@ -1601,7 +1673,7 @@ class BeamsBenchmarkMaster:
             self.suite.run_gcmma(spec_2d_c, max_iters=35),
             self.suite.run_semdot(spec_2d_c, max_iters=35),
             self.suite.run_beso(spec_2d_c, max_iters=35),
-            self.suite.run_se_ahca(spec_2d_c, max_iters=35),
+            self.suite.run_se_ahca(spec_2d_c, max_iters=100),
         ]
         render_4panel_benchmark_figure(
             recs_2d_cantilever, spec_2d_c, self.output_dir / "cantilever_benchmark_suite.png"
@@ -1612,7 +1684,7 @@ class BeamsBenchmarkMaster:
             self.suite.run_gcmma(spec_2d_m, max_iters=35),
             self.suite.run_semdot(spec_2d_m, max_iters=35),
             self.suite.run_beso(spec_2d_m, max_iters=35),
-            self.suite.run_se_ahca(spec_2d_m, max_iters=35),
+            self.suite.run_se_ahca(spec_2d_m, max_iters=100),
         ]
         render_4panel_benchmark_figure(
             recs_2d_mbb, spec_2d_m, self.output_dir / "mbb_benchmark_suite.png"

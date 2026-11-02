@@ -44,11 +44,10 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
-# Add project root and aieng src to path
+# Add project root to path
 ROOT = Path(__file__).resolve().parents[2]
-AIENG_SRC = ROOT / "aieng" / "src"
-if str(AIENG_SRC) not in sys.path:
-    sys.path.insert(0, str(AIENG_SRC))
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 try:
     import koreanize_matplotlib
@@ -57,11 +56,19 @@ except Exception:
     plt.rcParams["font.family"] = "Malgun Gothic"
     plt.rcParams["axes.unicode_minus"] = False
 
-from aieng.topopt import BuiltinAdapter, TopOptEvaluator, run_topology_optimization
-from aieng.topopt.elements import _b_matrix, _hex8_dN, isotropic_D, reference_stiffness
-from aieng.topopt.mesh import Mesh
-from aieng.topopt.progress import ProgressGif
-from aieng.topopt.stl_domain import StlCase, build_stl_problem
+from wht_topopt.core.stl_domain import (
+    BuiltinAdapter,
+    Mesh,
+    TopOptEvaluator,
+    StlCase,
+    build_stl_problem,
+    _b_matrix,
+    _hex8_dN,
+    isotropic_D,
+    reference_stiffness,
+    run_topology_optimization,
+    ProgressGif,
+)
 
 # Engineering constants
 LBF = 4.4482216152605

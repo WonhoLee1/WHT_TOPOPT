@@ -1,0 +1,68 @@
+[
+  {
+    "stage": "S0",
+    "description": "기준(기존): 단위 에너지 신호, 투영 없음, 신호 필터+이동평균, sigma_allow=250e6",
+    "compliance": 596.396,
+    "volume": 0.3995,
+    "grayness": 0.2106,
+    "iterations": 100,
+    "time_s": 10.1,
+    "dC_vs_prev_pct": null,
+    "dC_vs_doc595_pct": 0.2
+  },
+  {
+    "stage": "S1",
+    "description": "1) 신호 rho^(p-1)*u0/v, sigma_allow 상대(90퍼센타일)",
+    "compliance": 256.48,
+    "volume": 0.4,
+    "grayness": 0.0481,
+    "iterations": 100,
+    "time_s": 9.7,
+    "dC_vs_prev_pct": -57.0,
+    "dC_vs_doc595_pct": -56.9
+  },
+  {
+    "stage": "S2",
+    "description": "2) + Heaviside 투영(beta 1->8, 20회마다 2배), 투영 밀도로 체적 이분법",
+    "compliance": 230.788,
+    "volume": 0.4,
+    "grayness": 0.013,
+    "iterations": 100,
+    "time_s": 12.6,
+    "dC_vs_prev_pct": -10.0,
+    "dC_vs_doc595_pct": -61.2
+  },
+  {
+    "stage": "S3a",
+    "description": "3a) + 평활화는 신호 밀도 필터만",
+    "compliance": 231.661,
+    "volume": 0.4,
+    "grayness": 0.0128,
+    "iterations": 100,
+    "time_s": 14.1,
+    "dC_vs_prev_pct": 0.4,
+    "dC_vs_doc595_pct": -61.1
+  },
+  {
+    "stage": "S3b",
+    "description": "3b) + 평활화는 이동평균(2)만",
+    "compliance": 237.431,
+    "volume": 0.4,
+    "grayness": 0.0173,
+    "iterations": 100,
+    "time_s": 12.2,
+    "dC_vs_prev_pct": 2.5,
+    "dC_vs_doc595_pct": -60.1
+  },
+  {
+    "stage": "MMA",
+    "description": "MMA 기준(최대 100회, 투영 없음)",
+    "compliance": 256.481,
+    "volume": 0.4,
+    "grayness": 0.0467,
+    "iterations": 100,
+    "time_s": 21.2,
+    "dC_vs_prev_pct": null,
+    "dC_vs_doc595_pct": -56.9
+  }
+]

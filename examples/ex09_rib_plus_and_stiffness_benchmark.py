@@ -844,16 +844,11 @@ def main() -> None:
     html_report_path = out_base / "ex09_comprehensive_master_report.html"
     build_ex09_comprehensive_master_html_report(stl1_path, stl2_path, stl3_path, m1, m2, m3, html_report_path)
 
-    # Also mirror to aieng/examples/output/robot_arm_rib and brain artifacts
+    # Also mirror to brain artifacts
     brain_dir = Path("C:/Users/GOODMAN/.gemini/antigravity-cli/brain/5fa6c777-54ee-4efb-9a95-73c6214c8bb1")
     shutil.copyfile(html_report_path, brain_dir / "ex09_comprehensive_master_report.html")
     shutil.copyfile(vib_plot_path, brain_dir / "transient_vibration_3models.png")
     shutil.copyfile(stl3_path, brain_dir / "robot_arm_rib_dynamic_plus.stl")
-
-    mirror_aieng = Path("aieng/examples/output/robot_arm_rib")
-    shutil.copyfile(html_report_path, mirror_aieng / "ex09_comprehensive_master_report.html")
-    shutil.copyfile(vib_plot_path, mirror_aieng / "transient_vibration_3models.png")
-    shutil.copyfile(stl3_path, mirror_aieng / "robot_arm_rib_dynamic_plus.stl")
 
     print("\n" + "="*80)
     print(" [SUCCESS] Master Benchmark & HTML Report Generation Complete!")
