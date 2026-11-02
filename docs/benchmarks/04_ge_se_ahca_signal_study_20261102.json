@@ -37,5 +37,44 @@
     "options": "rho^p | no projection | no density filter | smoothing=moving_average",
     "grayness_inside": 0.0009,
     "final_weighted_comp_history": 11255958617.9
+  },
+  {
+    "mass_g": 235.11,
+    "compliance_per_case_Nmm": [
+      3781172528.2,
+      3001909562.5,
+      2117020124.2,
+      1066737395.7
+    ],
+    "weighted_compliance_Nmm": 2904156496.2,
+    "vm_max_per_case_MPa": [
+      1209.5,
+      687.4,
+      864.1,
+      477.4
+    ],
+    "vm_p995_per_case_MPa": [
+      783.5,
+      554.9,
+      568.8,
+      400.9
+    ],
+    "worst_vm_max_MPa": 1209.5,
+    "worst_vm_p995_MPa": 783.5,
+    "safety_factor": 1.15,
+    "passes_yield_max": false,
+    "passes_yield_p995": true,
+    "algo": "se_ahca",
+    "name": "SE-AHCA [p]",
+    "iterations": 100,
+    "t_fem_sec": 1151.17,
+    "t_sens_sec": 56.14,
+    "t_opt_sec": 15.39,
+    "t_total_sec": 1235.63,
+    "time_per_step_ms": 12356.3,
+    "variant": "p",
+    "options": "rho^p | Heaviside b1->8 | filter r=2.2h | smoothing=density_filter",
+    "grayness_inside": 0.0135,
+    "final_weighted_comp_history": 11499584988.6
   }
 ]
