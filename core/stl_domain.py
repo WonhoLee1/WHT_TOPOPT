@@ -12,7 +12,8 @@ Provides:
 """
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from types import SimpleNamespace
+from dataclasses import dataclass, field, replace
 import os
 from pathlib import Path
 import time
@@ -423,6 +424,9 @@ class BuiltinAdapter:
 
         if sol.ndim == 1:
             sol = sol[:, None]
+        if not np.all(np.isfinite(sol)):
+            raise RuntimeError("the linear solve returned non-finite displacements: the system is singular "
+                               "(on a coarse grid the supports or the load interface may have no elements)")
 
         q = np.zeros((F.shape[0], n_red), dtype=float)
         q[:, free] = sol.T
@@ -484,6 +488,7 @@ class Evaluation:
     volume_fraction: float
     dc: np.ndarray
     dv: np.ndarray
+    solve_wall_s: float = 0.0
 
 
 class TopOptEvaluator:
@@ -521,7 +526,7 @@ class TopOptEvaluator:
         penalty = p.penalty
         E = p.Emin + (p.E0 - p.Emin) * (xp ** penalty)
 
-        u, _, _ = self.adapter.solve(
+        u, solve_wall_s, _ = self.adapter.solve(
             p.mesh,
             youngs=E,
             nu=p.nu,
@@ -550,7 +555,7 @@ class TopOptEvaluator:
         ue = u[:, self.edofs]
         ke_batch = self.ref.ke[self.ref.index]
         k_ue = np.einsum("nab,cnb->cna", ke_batch, ue)
-        ce_all = 0.5 * np.sum(ue * k_ue, axis=2)  # (n_cases, n_elem)
+        ce_all = np.sum(ue * k_ue, axis=2)  # (n_cases, n_elem); c = f.u = u^T K u, so dc/dE_e = -u_e^T Ke0 u_e
         dc_xp = -(self.cw @ ce_all) * dE
         dc = (self.H.T @ (dc_xp * dproj)) if self.H is not None else (dc_xp * dproj)
         dv = (self.H.T @ (self.vol * dproj)) if self.H is not None else (self.vol * dproj)
@@ -563,6 +568,7 @@ class TopOptEvaluator:
             volume_fraction=vf,
             dc=dc,
             dv=dv,
+            solve_wall_s=solve_wall_s,
         )
 
 
@@ -579,6 +585,7 @@ class TopOptResult:
     iterations: int
     converged: bool
     history: List[Dict[str, Any]] = field(default_factory=list)
+    extras: Dict[str, Any] = field(default_factory=dict)  # method-specific results (SEMDOT: the optimizer, for its boundary)
 
 
 def _constraints(problem: TopOptProblem, e: Evaluation) -> Tuple[np.ndarray, np.ndarray]:
@@ -588,6 +595,81 @@ def _constraints(problem: TopOptProblem, e: Evaluation) -> Tuple[np.ndarray, np.
     return g, dg
 
 
+def measured_phase_times(result: "TopOptResult") -> Tuple[float, float, float]:
+    """(FE solve, sensitivity and the rest of the evaluation, optimizer update) wall time in seconds, summed over the iterations."""
+    h = result.history
+    fem = float(sum(r.get("solve_wall_s", 0.0) for r in h))
+    return fem, float(sum(r.get("t_eval_s", 0.0) for r in h)) - fem, float(sum(r.get("t_opt_s", 0.0) for r in h))
+
+
+def _run_semdot(problem: TopOptProblem, adapter: BuiltinAdapter, x0: Optional[np.ndarray], callback: Optional[Callable], n_sub: int = 4) -> TopOptResult:
+    """SEMDOT loop (Fu et al. 2020): the design variable x is updated by OC, filtered, interpolated to the nodes and cut on a
+    sub-element grid; the analysis uses the resulting element volume fraction Psi with a linear modulus (no SIMP penalty) and
+    the weighted sensitivity -((1 - Psi) xmin + Psi) u_e^T K0 u_e, averaged over the iterations."""
+    from wht_topopt.algorithms.oc import OCOptimizer
+    from wht_topopt.algorithms.semdot import SEMDOTOptimizer
+
+    xmin = 1e-6
+    design = TopOptEvaluator(problem, adapter)  # for the filter and the volumes only
+    analysis = TopOptEvaluator(
+        replace(problem, penalty=1.0, emin_ratio=xmin, filter_type="none", rmin=0.0, projection_beta=0.0), adapter
+    )
+    H = design.H
+    n_elems = problem.mesh.n_elems
+    x = np.full(n_elems, problem.volfrac, dtype=float) if x0 is None else np.asarray(x0, dtype=float).copy()
+    if x.shape != (n_elems,):
+        raise ValueError(f"x0 must have shape ({n_elems},), got {x.shape}")
+    oc = OCOptimizer(volfrac=problem.volfrac, move=0.20, rho_min=1e-3)
+    semdot = SEMDOTOptimizer(mesh=problem.mesh, volfrac=problem.volfrac, n_sub=n_sub, beta_init=0.5, beta_max=8.0, rho_min=xmin, move=0.20)
+    project = lambda xt: semdot.project_filtered(xt, target_volfrac=problem.volfrac, passive_solid=problem.passive_solid, passive_void=problem.passive_void)
+    psi = project(H @ x if H is not None else x)
+    de = analysis.problem.E0 - analysis.problem.Emin
+    dv = H.T @ design.vol if H is not None else design.vol
+    dc_prev = None
+    history: List[Dict[str, Any]] = []
+    converged = False
+    it = 0
+    for it in range(1, problem.max_iters + 1):
+        t0 = time.perf_counter()
+        e = analysis.evaluate(psi, gradients=True)
+        unit_energy = -e.dc / de  # u_e^T K0_e u_e (zero on passive elements)
+        dc = -((1.0 - e.xphys) * xmin + e.xphys) * de * unit_energy
+        if dc_prev is not None:
+            dc = 0.35 * dc + 0.65 * dc_prev
+        dc_prev = dc
+        dc_x = H.T @ dc if H is not None else dc
+        history.append({"iter": it, "compliance": e.compliance, "volume_fraction": e.volume_fraction,
+                        "t_eval_s": time.perf_counter() - t0, "solve_wall_s": e.solve_wall_s, "beta": semdot.beta, "psi": semdot.psi})
+        if callback is not None:
+            callback(it, e, None)
+        t1 = time.perf_counter()
+        x_new = oc.update(x, dc_x, None, dv, elem_volumes=design.ref.volume, passive_solid=problem.passive_solid, passive_void=problem.passive_void)
+        psi = project(H @ x_new if H is not None else x_new)
+        history[-1]["t_opt_s"] = time.perf_counter() - t1
+        change = float(np.mean(np.abs(x_new - x)))
+        x = x_new
+        if change < problem.tol and it >= 25:
+            converged = True
+            break
+    final = analysis.evaluate(psi, gradients=False)
+    return TopOptResult(x=x, xphys=final.xphys, compliance=final.compliance, volume_fraction=final.volume_fraction, iterations=it,
+                        converged=converged, history=history, extras={"semdot": semdot})
+
+
+def _beso_load_path_guard(problem: TopOptProblem) -> Dict[str, Any]:
+    """Keyword arguments arming BESO's connectivity check: a 0/1 design can cut the load path, and then its compliance explodes."""
+    mesh = problem.mesh
+    loaded = np.any(np.stack([lc.force for lc in problem.load_cases]) != 0.0, axis=0)
+    load_nodes = np.unique(np.flatnonzero(loaded) // 3)
+    for rb in problem.rigid_bodies:  # a load on the master nodes enters the elements through the slave nodes
+        if np.isin([rb.ref_node, rb.rot_node], load_nodes).any():
+            load_nodes = np.union1d(np.setdiff1d(load_nodes, [rb.ref_node, rb.rot_node]), rb.nodes)
+    # at least two held dofs: a symmetry plane or roller holds one and is not an anchor by itself
+    held = np.bincount(np.asarray(problem.fixed_dofs, dtype=np.int64) // 3, minlength=mesh.nodes.shape[0])
+    return {"mesh": SimpleNamespace(elements=mesh.elems, n_nodes=mesh.nodes.shape[0]), "load_nodes": load_nodes,
+            "fixed_nodes": np.flatnonzero(held >= 2)}
+
+
 def run_topology_optimization(
     problem: TopOptProblem,
     adapter: BuiltinAdapter,
@@ -595,26 +677,58 @@ def run_topology_optimization(
     x0: Optional[np.ndarray] = None,
     callback: Optional[Callable[[int, Evaluation, Any], None]] = None,
 ) -> TopOptResult:
-    """Standalone MMA / GCMMA / BESO / SEMDOT optimization driver."""
+    """Standalone MMA / GCMMA / OC / BESO / SEMDOT optimization driver.
+
+    ``problem.optimizer`` selects the update; an unknown value is refused, never replaced by another method.
+    With ``variable_groups`` the design vector ``x`` holds one value per group (MMA and GCMMA only); ``x0`` may be given per
+    group or per element (then averaged over each group).
+    """
+    from wht_topopt.algorithms.adapter import AlgorithmRegistry, OptimizationStepInput
     from wht_topopt.algorithms.mma_wrapper import MMAOptimizer
 
-    evaluator = TopOptEvaluator(problem, adapter)
-    n_var = problem.mesh.n_elems
-    x = np.full(n_var, problem.volfrac, dtype=float) if x0 is None else np.asarray(x0, dtype=float).copy()
+    name = problem.optimizer.strip().lower()
+    if name not in ("mma", "gcmma", "oc", "beso", "semdot"):
+        raise ValueError(f"unknown optimizer '{problem.optimizer}': use 'mma', 'gcmma', 'oc', 'beso' or 'semdot'")
 
-    # If variable groups (e.g. extrusion) are given
     groups = problem.variable_groups
-    n_groups = int(groups.max()) + 1 if groups is not None else None
+    if groups is not None and name not in ("mma", "gcmma"):
+        raise ValueError(f"variable_groups needs optimizer 'mma' or 'gcmma', got '{name}'")
+    if name == "semdot":
+        return _run_semdot(problem, adapter, x0, callback)
 
-    if problem.optimizer == "mma":
-        opt = MMAOptimizer(
-            rho_min=1e-3,
-            rho_max=1.0,
-            move=0.20,
-        )
+    evaluator = TopOptEvaluator(problem, adapter)
+    n_elems = problem.mesh.n_elems
+    n_groups = int(groups.max()) + 1 if groups is not None else None
+    n_var = n_elems if groups is None else n_groups
+
+    if x0 is None:
+        # BESO evolves from the full design down to the target; the others start from the uniform feasible design
+        x = np.full(n_var, 1.0 if name == "beso" else problem.volfrac, dtype=float)
     else:
-        # Default fallback to MMA
-        opt = MMAOptimizer(rho_min=1e-3, rho_max=1.0, move=0.20)
+        x = np.asarray(x0, dtype=float).copy()
+        if groups is not None and x.shape == (n_elems,) and n_groups != n_elems:
+            x = np.bincount(groups, weights=x, minlength=n_groups) / np.bincount(groups, minlength=n_groups)
+        if x.shape != (n_var,):
+            raise ValueError(f"x0 must have shape ({n_var},), got {x.shape}")
+
+    opt_kw = {"rho_min": 1e-3, "move": 0.20}
+    if name == "mma":
+        opt = MMAOptimizer(rho_max=1.0, **opt_kw)
+    elif name == "gcmma":
+        opt = AlgorithmRegistry.get("gcmma", rho_max=1.0, **opt_kw)
+    elif name == "beso":
+        opt = AlgorithmRegistry.get("beso", target_volfrac=problem.volfrac, **_beso_load_path_guard(problem), **opt_kw)
+    else:  # oc
+        opt = AlgorithmRegistry.get(name, volfrac=problem.volfrac, **opt_kw)
+    solid_mask = np.zeros(n_elems, dtype=bool)
+    solid_mask[problem.passive_solid] = True
+    void_mask = np.zeros(n_elems, dtype=bool)
+    void_mask[problem.passive_void] = True
+    if name == "beso":  # a 0/1 update must not remove the elements that carry a load or a support
+        guard = _beso_load_path_guard(problem)
+        touches = np.zeros(problem.mesh.nodes.shape[0], dtype=bool)
+        touches[np.concatenate([guard["load_nodes"], guard["fixed_nodes"]])] = True
+        solid_mask |= touches[problem.mesh.elems].any(axis=1) & ~void_mask
 
     history = []
     converged = False
@@ -623,13 +737,11 @@ def run_topology_optimization(
     last_e: Optional[Evaluation] = None
 
     for it in range(1, problem.max_iters + 1):
-        if groups is not None:
-            # Map grouped variables to full element array
-            x_full = x[groups] if len(x) == n_groups else x
-        else:
-            x_full = x
+        x_full = x[groups] if groups is not None else x  # map group variables to the element array
 
+        t_eval0 = time.perf_counter()
         e = evaluator.evaluate(x_full, gradients=True)
+        t_eval = time.perf_counter() - t_eval0
         last_e = e
 
         if c_ref is None:
@@ -639,31 +751,46 @@ def run_topology_optimization(
         f0 = e.compliance / c_ref
         df0 = e.dc / c_ref
 
-        if groups is not None and len(x) == n_groups:
-            # Group reduction
-            df0_g = np.bincount(groups, weights=df0, minlength=n_groups)
-            dg_g = np.vstack([np.bincount(groups, weights=dg[0], minlength=n_groups)])
-            x_cur = x
-            df_curr, dg_curr = df0_g, dg_g
+        if groups is not None:  # gradients with respect to the group variables
+            df_curr = np.bincount(groups, weights=df0, minlength=n_groups)
+            dg_curr = np.vstack([np.bincount(groups, weights=dg[0], minlength=n_groups)])
         else:
-            x_cur = x_full
             df_curr, dg_curr = df0, dg
+        x_cur = x
 
         history.append({
             "iter": it,
             "compliance": e.compliance,
             "volume_fraction": e.volume_fraction,
+            "t_eval_s": t_eval,
+            "solve_wall_s": e.solve_wall_s,
         })
 
         if callback is not None:
             callback(it, e, None)
 
-        x_next = opt.update(
-            rho=x_cur,
-            df_drho=df_curr,
-            g_vals=g,
-            dg_drho=dg_curr,
-        )
+        t_opt0 = time.perf_counter()
+        if name == "mma":
+            x_next = opt.update(rho=x_cur, df_drho=df_curr, g_vals=g, dg_drho=dg_curr)
+        else:
+            def _true_values(xt: np.ndarray, _ref: float = c_ref) -> Tuple[float, np.ndarray]:
+                et = evaluator.evaluate(xt[groups] if groups is not None else xt, gradients=False)
+                return et.compliance / _ref, _constraints(problem, et)[0]
+
+            x_next = opt.step(OptimizationStepInput(
+                iteration=it,
+                rho=x_cur,
+                df_drho=df_curr,
+                g_vals=g,
+                dg_drho=dg_curr,
+                elem_volumes=None if groups is not None else evaluator.ref.volume,
+                passive_solid=None if groups is not None else solid_mask,
+                passive_void=None if groups is not None else void_mask,
+                f0_val=f0,
+                eval_fn=_true_values,
+            )).rho_next
+
+        history[-1]["t_opt_s"] = time.perf_counter() - t_opt0
 
         chg = float(np.max(np.abs(x_next - x_cur)))
         x = x_next
@@ -671,7 +798,7 @@ def run_topology_optimization(
             converged = True
             break
 
-    x_final_full = x[groups] if groups is not None and len(x) == n_groups else x
+    x_final_full = x[groups] if groups is not None else x
     e_final = evaluator.evaluate(x_final_full, gradients=False)
     return TopOptResult(
         x=x,

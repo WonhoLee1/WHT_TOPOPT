@@ -1,5 +1,7 @@
 # Benchmark Study 2: GE Jet Engine Bracket Advanced Algorithms & Multi-Physics Study
 
+> **주의 (2026-11-03).** 이 문서의 수치는 코드 리뷰(`docs/references/investigations/code_review_wht_topopt_20261103.md`) 수정 전 결과이며 재생성이 필요하다. 해당 결함: GCMMA, SEMDOT, BESO 행은 MMA 재실행이고(R2), Extruded 행은 제약 미적용이며(R3), SE-AHCA 응력 항은 두 번 완화되었다(R4). ex07 경로는 E0 = 1, nu = 0.3으로 실행되었고 단계별 시간은 고정 비율이었다.
+
 > 본 문서는 GrabCAD 2013 공식 챌린지인 **GE 항공기 제트 엔진 브라켓(Jet Engine Bracket)** 문제에 대해 수행된 5대 위상최적화 알고리즘(GCMMA, MMA, SEMDOT, Kratos-MMA, SE-AHCA) 및 정적·동적 다물리 해석 결과를 정리한 공식 기술 문서입니다.
 
 ---

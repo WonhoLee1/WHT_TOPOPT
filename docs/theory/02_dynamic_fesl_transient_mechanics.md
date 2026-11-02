@@ -12,7 +12,9 @@ $$\mathbf{M}(\boldsymbol{\rho}) \ddot{\mathbf{u}}(t) + \mathbf{C}(\boldsymbol{\r
 
 여기서:
 - $\mathbf{M}(\boldsymbol{\rho})$는 일관 질량 행렬(Consistent Mass Matrix) 또는 집중 질량 행렬(Lumped Mass Matrix)입니다:
-  $$\mathbf{M}_e(\rho_e) = \rho_e \, \mathbf{M}_{0,e}$$
+  $$\mathbf{M}_e(\rho_e) = m(\rho_e) \, \mathbf{M}_{0,e}, \quad m(\rho) = \rho \ (\rho \ge 0.1), \quad m(\rho) = 10^{5} \rho^{6} \ (\rho < 0.1)$$
+
+  (Du & Olhoff 2007. 선형 질량 $\rho \mathbf{M}_0$은 $E \propto \rho^3$과 함께 쓰면 저밀도 요소에 국부 스퓨리어스 모드를 만들므로 쓰지 않는다.)
 - $\mathbf{C}(\boldsymbol{\rho})$는 레일리 감쇠(Rayleigh Damping) 모델을 따릅니다:
   $$\mathbf{C}(\boldsymbol{\rho}) = \alpha_{\text{mass}} \mathbf{M}(\boldsymbol{\rho}) + \beta_{\text{stiff}} \mathbf{K}(\boldsymbol{\rho})$$
 - $\mathbf{f}(t)$는 시간에 따라 변하는 외부 충격 또는 돌풍 하중 벡터입니다.
@@ -38,6 +40,8 @@ $$\begin{aligned}
 ---
 
 ## 3. Buzaglo (2026) True F-ESL (Equivalent Static Load) 정식화
+
+> **구현 상태 (2026-11-03 코드 리뷰 R7).** 아래 3.2의 $\mathbf{f} = \mathbf{K}\mathbf{u}(t_{\text{peak}})$는 0차 ESL이다. `ex09`의 보정항은 임계 시점의 $\mathbf{u}_k$를 수반 변수 대신 쓰는 휴리스틱이며, 과도 수반 해석과 KKT 잔차가 없다. 따라서 현재 구현은 정확한 F-ESL 기울기가 아니고 KKT 보장도 없다. 정적 부문제의 해는 $\mathbf{u}(t_k)$와 항등이므로 코드는 풀이 없이 그 값을 읽는다.
 
 ### 3.1 전통적 ESL의 한계
 전통적인 동적 위상최적화의 ESL 기법은 각 시간 스텝의 변위 $\mathbf{u}(t_i)$를 순차적으로 정적 하중으로 매핑하여 계산량이 비대해지고, 정적 최적화기와의 상호작용 과정에서 비틀림 모드와 굽힘 모드가 충돌하는 진동 발산(Instability) 현상이 발생합니다.

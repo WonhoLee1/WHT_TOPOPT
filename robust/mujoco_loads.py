@@ -17,12 +17,16 @@ from __future__ import annotations
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 import xml.etree.ElementTree as ET
 
-import mujoco
 import numpy as np
 import scipy.sparse as sp
 
 from wht_topopt.core.mesh import StructuredMesh2D, StructuredMesh3D, UnstructuredMesh
 from wht_topopt.solvers.base import FEASolver, LoadCase, build_rigid_body_modes
+
+try:
+    import mujoco
+except ImportError:  # optional dependency: wht_topopt must stay importable without it
+    mujoco = None
 
 
 class MuJoCoLoadProvider:
@@ -42,6 +46,8 @@ class MuJoCoLoadProvider:
         xml_path : Optional[str]
             Path to MJCF XML file.
         """
+        if mujoco is None:
+            raise ImportError("MuJoCoLoadProvider needs the optional 'mujoco' package (pip install mujoco)")
         if xml_str is not None:
             self.xml_str: str = xml_str
             self.model: mujoco.MjModel = mujoco.MjModel.from_xml_string(xml_str)

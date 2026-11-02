@@ -246,6 +246,8 @@ def assemble_tetra_elements(
 
         if HAS_NUMBA:
             _assemble_tet4_batch_numba(coords, C0, youngs, ke_all, b_all, volumes)
+            if np.any(volumes <= 0.0):
+                raise ValueError(f"Inverted TET4 element(s): {np.flatnonzero(volumes <= 0.0)[:10].tolist()}")
         else:
             for e in range(n_elems):
                 ke0, _, b0 = tet4_ke0_me0(coords[e], nu)

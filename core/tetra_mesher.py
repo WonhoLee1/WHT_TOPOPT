@@ -115,6 +115,8 @@ def mesh_stl_tetra(
         if etype == target_type:
             n_per_elem = 4 if order == 1 else 10
             conn = np.array([tag_to_idx[t] for t in enodes], dtype=np.int64).reshape(-1, n_per_elem)
+            if order == 2:  # gmsh edge nodes 8 = (2-3), 9 = (1-3); fe_builders expects 8 = (1-3), 9 = (2-3)
+                conn = conn[:, [0, 1, 2, 3, 4, 5, 6, 7, 9, 8]]
             elems_list.append(conn)
 
     gmsh.model.remove()
@@ -140,7 +142,7 @@ def tag_nodes_near_stl(
     """Find mesh node indices that lie within a given tolerance of a boundary STL surface.
 
     Used to identify fixed bolt regions (GE_fixed.STL) and clevis pin surfaces (GE_force.STL).
-    Uses scipy.spatial.cKDTree over boundary surface sample points for 100% self-contained execution
+    Uses scipy.spatial.cKDTree over surface samples spaced at most ``tolerance`` apart, for 100% self-contained execution
     without external rtree dependencies.
 
     Args:
@@ -158,14 +160,9 @@ def tag_nodes_near_stl(
         raise FileNotFoundError(f"Boundary STL not found: {stl_path}")
 
     bnd_tri = trimesh.load_mesh(str(stl_path))
-    # Collect dense surface sample points: vertices + face midpoints
-    pts = [bnd_tri.vertices, bnd_tri.triangles.mean(axis=1)]
-    # If face is large, also add edge midpoints
-    v0 = bnd_tri.triangles[:, 0]
-    v1 = bnd_tri.triangles[:, 1]
-    v2 = bnd_tri.triangles[:, 2]
-    pts.extend([0.5 * (v0 + v1), 0.5 * (v1 + v2), 0.5 * (v2 + v0)])
-    sample_points = np.vstack(pts)
+    # Samples with edge length <= tolerance: every point of the surface is then within tolerance of a sample,
+    # so a node on a large triangle's interior is found as well
+    sample_points, _ = trimesh.remesh.subdivide_to_size(bnd_tri.vertices, bnd_tri.faces, max_edge=tolerance)
 
     tree = cKDTree(sample_points)
     distances, _ = tree.query(mesh.nodes, k=1)

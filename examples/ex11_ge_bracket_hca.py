@@ -196,7 +196,7 @@ class GEBracketHCABenchmark:
 
             # Compute SED and von Mises stress for each case
             E_field = self.problem.Emin + (self.problem.E0 - self.problem.Emin) * rho_phys**self.problem.penalty
-            vm_all = calculate_von_mises(self.problem.mesh, E_field, self.problem.nu, u_all)  # (4, ne)
+            vm_all = calculate_von_mises(self.problem.mesh, np.full_like(E_field, self.problem.E0), self.problem.nu, u_all)  # solid-modulus stress: the HCA applies rho^q itself (theory 03, section 2)  # (4, ne)
 
             # Element-level SED
             edofs = self.problem.mesh.element_dofs()
@@ -334,7 +334,7 @@ class GEBracketHCABenchmark:
             rho_phys = e.xphys
 
             E_field = self.problem.Emin + (self.problem.E0 - self.problem.Emin) * rho_phys**self.problem.penalty
-            vm_all = calculate_von_mises(self.problem.mesh, E_field, self.problem.nu, u_all)
+            vm_all = calculate_von_mises(self.problem.mesh, np.full_like(E_field, self.problem.E0), self.problem.nu, u_all)  # solid-modulus stress: the HCA applies rho^q itself (theory 03, section 2)
 
             edofs = self.problem.mesh.element_dofs()
             ref_ke = evaluator_dyn.ref.ke
@@ -484,7 +484,7 @@ class GEBracketHCABenchmark:
                 rho_phys = e.xphys
 
                 E_field = self.problem.Emin + (self.problem.E0 - self.problem.Emin) * rho_phys**self.problem.penalty
-                vm_all = calculate_von_mises(self.problem.mesh, E_field, self.problem.nu, u_all)
+                vm_all = calculate_von_mises(self.problem.mesh, np.full_like(E_field, self.problem.E0), self.problem.nu, u_all)  # solid-modulus stress: the HCA applies rho^q itself (theory 03, section 2)
 
                 edofs = self.problem.mesh.element_dofs()
                 ref_ke = self.evaluator.ref.ke
@@ -535,7 +535,7 @@ class GEBracketHCABenchmark:
                 )
                 rho_next = x_next
                 E_field = self.problem.Emin + (self.problem.E0 - self.problem.Emin) * e.xphys**self.problem.penalty
-                vm_all = calculate_von_mises(self.problem.mesh, E_field, self.problem.nu, e.u)
+                vm_all = calculate_von_mises(self.problem.mesh, np.full_like(E_field, self.problem.E0), self.problem.nu, e.u)  # solid-modulus stress: the HCA applies rho^q itself (theory 03, section 2)
                 vm_inside = vm_all[:, self.inside_elems]
                 solid_mask = x_inside >= 0.5
                 metrics = {

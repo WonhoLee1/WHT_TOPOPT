@@ -587,6 +587,27 @@ def _tet10_shape_derivs(r: float, s: float, t: float) -> np.ndarray:
     return dN
 
 
+_TET_MASS_RULE = None
+
+
+def _tet_mass_quadrature():
+    """Conical (collapsed Gauss-Legendre) rule on the reference tetrahedron, positive weights, exact to degree 4 (36 points)."""
+    global _TET_MASS_RULE
+    if _TET_MASS_RULE is None:
+        def line(n):
+            x, w = np.polynomial.legendre.leggauss(n)
+            return 0.5 * (x + 1.0), 0.5 * w
+
+        pts, wts = [], []
+        for u, wu in zip(*line(4)):  # (1-u)^2 raises the degree in u by two, (1-v) the degree in v by one
+            for v, wv in zip(*line(3)):
+                for q, wq in zip(*line(3)):
+                    pts.append((u, v * (1.0 - u), q * (1.0 - u) * (1.0 - v)))
+                    wts.append(wu * wv * wq * (1.0 - u) ** 2 * (1.0 - v))
+        _TET_MASS_RULE = (np.array(pts), np.array(wts))
+    return _TET_MASS_RULE
+
+
 def tet10_ke0_me0(
     coords: np.ndarray,
     nu: float,
@@ -594,7 +615,7 @@ def tet10_ke0_me0(
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Compute reference Ke0 (30x30), Me0 (30x30), and centroid B0 (6x30) for 10-node TET10.
 
-    Uses 4-point Hammer-Marlowe Gauss quadrature (2nd order exact on tets).
+    Stiffness: 4-point Hammer-Marlowe quadrature (2nd order exact). Mass: 36-point conical rule (4th order exact).
 
     Parameters
     ----------
@@ -646,11 +667,10 @@ def tet10_ke0_me0(
         w_det = detJ * w
         Ke0 += (B.T @ C0 @ B) * w_det
 
-        # Consistent mass matrix (rho = 1)
-        L1 = 1.0 - r - s - t
-        L2 = r
-        L3 = s
-        L4 = t
+    # Consistent mass matrix (rho = 1): N^T N is of degree 4, so the 4-point rule above leaves it rank deficient
+    for (r, s, t), w_m in zip(*_tet_mass_quadrature()):
+        detJ = np.linalg.det(_tet10_shape_derivs(r, s, t).T @ c)
+        L1, L2, L3, L4 = 1.0 - r - s - t, r, s, t
         N = np.array([
             L1 * (2.0 * L1 - 1.0),
             L2 * (2.0 * L2 - 1.0),
@@ -664,7 +684,7 @@ def tet10_ke0_me0(
             4.0 * L3 * L4,
         ], dtype=np.float64)
         N_mat = np.kron(N[:, None], np.eye(3, dtype=np.float64)).reshape(30, 3).T
-        Me0 += (N_mat.T @ N_mat) * w_det
+        Me0 += (N_mat.T @ N_mat) * (detJ * w_m)
 
     # Centroid B0 at r = s = t = 0.25 (L1 = L2 = L3 = L4 = 0.25)
     dN0 = _tet10_shape_derivs(0.25, 0.25, 0.25)
