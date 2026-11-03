@@ -1,5 +1,7 @@
 # Benchmark Study 1: High-Speed Industrial Robot Arm Dynamic Rib & Multi-Physics Study
 
+> **주의 (2026-11-03).** 이 문서의 수치는 코드 리뷰(`docs/references/investigations/code_review_wht_topopt_20261103.md`) 수정 전 결과이며 재생성이 필요하다. 해당 결함: Generalized-alpha 우변(R1), 시간 스텝과 선형 질량(R8), 피크 응력과 가중치(R5), 신호 필터(R6). F-ESL 표기는 휴리스틱 보정이다(R7).
+
 > 본 문서는 고속 산업용 픽앤플레이스 로봇 암(Robot Arm)에 대해 수행된 정적·동적 위상최적화, 평면 압출 리브 필터링(PlanarRibExtrusionFilter), 체적 완화(Volume Relaxation, $V=35\%$)를 통한 All-Dominant 고성능 리브 달성 및 SE-AHCA 벤치마크 결과를 집대성한 공식 기술 보고서입니다.
 
 ---

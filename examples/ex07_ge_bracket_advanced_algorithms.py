@@ -67,6 +67,7 @@ from wht_topopt.core.stl_domain import (
     _hex8_dN,
     isotropic_D,
     reference_stiffness,
+    measured_phase_times,
     run_topology_optimization,
     _constraints,
 )
@@ -495,7 +496,7 @@ def run_single_algorithm(
             # Sens / Energy computation
             t0 = time.perf_counter()
             E_field = p_base.Emin + (p_base.E0 - p_base.Emin) * rho_phys**p_base.penalty
-            vm_all = calculate_von_mises(p_base.mesh, E_field, p_base.nu, u_all)
+            vm_all = calculate_von_mises(p_base.mesh, np.full_like(E_field, p_base.E0), p_base.nu, u_all)  # solid-modulus stress: the HCA applies rho^q itself (theory 03, section 2)
 
             edofs = p_base.mesh.element_dofs()
             ref_ke = evaluator.ref.ke
@@ -583,7 +584,7 @@ def run_single_algorithm(
 
             t0 = time.perf_counter()
             E_field = p_base.Emin + (p_base.E0 - p_base.Emin) * e.xphys**p_base.penalty
-            vm_all = calculate_von_mises(p_base.mesh, E_field, p_base.nu, e.u)
+            vm_all = calculate_von_mises(p_base.mesh, np.full_like(E_field, p_base.E0), p_base.nu, e.u)  # solid-modulus stress: the HCA applies rho^q itself (theory 03, section 2)
             edofs = p_base.mesh.element_dofs()
             ref_ke = evaluator.ref.ke
             ref_idx = evaluator.ref.index
@@ -631,9 +632,10 @@ def run_single_algorithm(
         t_mma0 = time.perf_counter()
         res_mma = run_topology_optimization(p_opt, adapter, x0=x_warm_full, callback=hybrid_mma_cb)
         t_mma_dur = time.perf_counter() - t_mma0
-        t_fem_total += t_mma_dur * 0.70
-        t_sens_total += t_mma_dur * 0.20
-        t_opt_total += t_mma_dur * 0.10
+        t_fem, t_sens, t_opt = measured_phase_times(res_mma)
+        t_fem_total += t_fem
+        t_sens_total += t_sens
+        t_opt_total += t_opt
 
         x_phys = getattr(res_mma, "xphys", getattr(res_mma, "x_phys", None))
         xb = binarize_design(p_base, inside, x_phys, vol, volfrac)
@@ -654,9 +656,7 @@ def run_single_algorithm(
         t0 = time.perf_counter()
         res = run_topology_optimization(p_ext, adapter, callback=ext_cb)
         dur = time.perf_counter() - t0
-        t_fem_total = dur * 0.70
-        t_sens_total = dur * 0.20
-        t_opt_total = dur * 0.10
+        t_fem_total, t_sens_total, t_opt_total = measured_phase_times(res)
         x_phys = getattr(res, "xphys", getattr(res, "x_phys", None))
         xb = binarize_design(p_base, inside, x_phys, vol, volfrac)
         iterations = res.iterations
@@ -673,9 +673,7 @@ def run_single_algorithm(
         t0 = time.perf_counter()
         res = run_topology_optimization(p_opt, adapter, callback=gcmma_cb)
         dur = time.perf_counter() - t0
-        t_fem_total = dur * 0.70
-        t_sens_total = dur * 0.20
-        t_opt_total = dur * 0.10
+        t_fem_total, t_sens_total, t_opt_total = measured_phase_times(res)
         x_phys = getattr(res, "xphys", getattr(res, "x_phys", None))
         xb = binarize_design(p_base, inside, x_phys, vol, volfrac)
         iterations = res.iterations
@@ -692,9 +690,7 @@ def run_single_algorithm(
         t0 = time.perf_counter()
         res = run_topology_optimization(p_opt, adapter, callback=semdot_cb)
         dur = time.perf_counter() - t0
-        t_fem_total = dur * 0.70
-        t_sens_total = dur * 0.20
-        t_opt_total = dur * 0.10
+        t_fem_total, t_sens_total, t_opt_total = measured_phase_times(res)
         x_phys = getattr(res, "xphys", getattr(res, "x_phys", None))
         xb = binarize_design(p_base, inside, x_phys, vol, volfrac)
         iterations = res.iterations
@@ -711,9 +707,7 @@ def run_single_algorithm(
         t0 = time.perf_counter()
         res = run_topology_optimization(p_opt, adapter, callback=beso_cb)
         dur = time.perf_counter() - t0
-        t_fem_total = dur * 0.70
-        t_sens_total = dur * 0.20
-        t_opt_total = dur * 0.10
+        t_fem_total, t_sens_total, t_opt_total = measured_phase_times(res)
         x_phys = getattr(res, "xphys", getattr(res, "x_phys", None))
         xb = binarize_design(p_base, inside, x_phys, vol, volfrac)
         iterations = res.iterations
@@ -730,9 +724,7 @@ def run_single_algorithm(
         t0 = time.perf_counter()
         res = run_topology_optimization(p_opt, adapter, callback=mma_cb)
         dur = time.perf_counter() - t0
-        t_fem_total = dur * 0.70
-        t_sens_total = dur * 0.20
-        t_opt_total = dur * 0.10
+        t_fem_total, t_sens_total, t_opt_total = measured_phase_times(res)
         x_phys = getattr(res, "xphys", getattr(res, "x_phys", None))
         xb = binarize_design(p_base, inside, x_phys, vol, volfrac)
         iterations = res.iterations
@@ -1183,7 +1175,7 @@ def main():
     print("=" * 100, flush=True)
 
     # 1. Build Base Domain
-    p_base, inside = build_stl_problem(CASE_GE, mesh_control, volfrac, base=stl_dir)
+    p_base, inside = build_stl_problem(CASE_GE, mesh_control, volfrac, base=stl_dir, E0=E_TI_MPA, nu=NU_TI)
     nodes = p_base.mesh.nodes
     h = float(nodes[1, 0] - nodes[0, 0])
     origin = nodes[0]

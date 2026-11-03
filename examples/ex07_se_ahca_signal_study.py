@@ -27,7 +27,7 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import ex07_ge_bracket_advanced_algorithms as ex07  # noqa: E402
-from ex07_ge_bracket_advanced_algorithms import (  # noqa: E402
+from ex07_ge_bracket_advanced_algorithms import E_TI_MPA, NU_TI, (  # noqa: E402
     CASE_GE,
     ROOT,
     SeAhcaOptions,
@@ -60,7 +60,7 @@ def run_variant(key: str, opts: SeAhcaOptions, mesh_control: int, volfrac: float
     Returns:
         Metrics dict (binary evaluation + grayness + timing).
     """
-    p_base, inside = build_stl_problem(CASE_GE, mesh_control, volfrac, base=ROOT / "external" / "freeto_stls")
+    p_base, inside = build_stl_problem(CASE_GE, mesh_control, volfrac, base=ROOT / "external" / "freeto_stls", E0=E_TI_MPA, nu=NU_TI)
     h = float(p_base.mesh.nodes[1, 0] - p_base.mesh.nodes[0, 0])
     vol = reference_stiffness(p_base.mesh, p_base.nu).volume
     out_dir = out_root / key

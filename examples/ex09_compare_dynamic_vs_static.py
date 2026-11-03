@@ -56,6 +56,7 @@ os.environ["MKL_NUM_THREADS"] = "6"
 
 from wht_topopt.algorithms import MMAOptimizer
 from wht_topopt.core.fem import FEMEngine
+from wht_topopt.core.time_integration import check_time_step, du_olhoff_mass_density, generalized_alpha_rhs, newmark_update
 from wht_topopt.core.filter import DensityFilter
 from wht_topopt.core.mesh import StructuredMesh3D
 from wht_topopt.examples.ex09_esl_dynamic_robot_arm import (
@@ -270,7 +271,7 @@ class DynamicVsStaticCrossEvaluator:
         # Simulation kinematics: 50 ms S-curve slewing + 20 ms residual free vibration
         self.t_slew = 0.050    # 50 ms
         self.t_total = 0.070   # 70 ms (includes 20 ms settling period)
-        self.n_steps = 42      # 42 steps -> dt = 1.667 ms
+        self.n_steps = 240     # omega_1 dt <= 0.5 for f1 up to about 350 Hz
         self.time_vec = np.linspace(0.0, self.t_total, self.n_steps)
         self.dt = self.time_vec[1] - self.time_vec[0]
 
@@ -355,7 +356,7 @@ class DynamicVsStaticCrossEvaluator:
     def _assemble_system(self, rho_field: np.ndarray) -> Tuple[sp.csc_matrix, sp.csc_matrix, sp.csc_matrix]:
         """Assemble K, M, and Rayleigh Damping C = alpha*M + beta*K."""
         youngs = self.emin + (rho_field ** self.penal) * (self.e0 - self.emin)
-        rho_elem_mass = rho_field * self.rho_mat
+        rho_elem_mass = du_olhoff_mass_density(rho_field) * self.rho_mat
 
         K = self.fem.assemble_K(youngs).tocsc()
         M = self.fem.assemble_M(rho_elem_mass).tocsc()
@@ -415,6 +416,7 @@ class DynamicVsStaticCrossEvaluator:
                 (1.0 - alpha_f) * gamma / (beta * dt) * C_free + \
                 (1.0 - alpha_f) * K_free
         K_hat = K_hat.tocsr()
+        check_time_step(K_free, M_free, dt)
 
         solver = pypardiso.PyPardisoSolver(mtype=11)
         solver.factorize(K_hat)
@@ -439,21 +441,9 @@ class DynamicVsStaticCrossEvaluator:
                 f_prev = self.f_ext_history[s - 1, free]
                 f_mid = (1.0 - alpha_f) * f_curr + alpha_f * f_prev
 
-                p_term = (
-                    M_free @ ((1.0 - alpha_m) / (beta * (dt**2)) * u +
-                              (1.0 - alpha_m) / (beta * dt) * v +
-                              (1.0 - alpha_m) * (1.0 - 2.0 * beta) / (2.0 * beta) * a) +
-                    C_free @ ((1.0 - alpha_f) * gamma / (beta * dt) * u +
-                              (1.0 - alpha_f) * (gamma / beta - 1.0) * v +
-                              (1.0 - alpha_f) * dt * (gamma / (2.0 * beta) - 1.0) * a) -
-                    alpha_f * (K_free @ u)
-                )
-
-                r_hat = f_mid + p_term
+                r_hat = generalized_alpha_rhs(M_free, C_free, K_free, u, v, a, f_mid, dt, alpha_m, alpha_f, beta, gamma)
                 u_next = solver.solve(K_hat, r_hat)
-
-                a_next = (u_next - u) / (beta * (dt**2)) - v / (beta * dt) - (1.0 - 2.0 * beta) / (2.0 * beta) * a
-                v_next = v + dt * ((1.0 - gamma) * a + gamma * a_next)
+                v_next, a_next = newmark_update(u, v, a, u_next, dt, beta, gamma)
 
                 u = u_next
                 v = v_next

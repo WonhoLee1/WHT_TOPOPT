@@ -1,5 +1,7 @@
 # GE 브라켓 SE-AHCA: 투영 + 단일 평활화, 신호 지수 rho^p vs rho^(p-1)
 
+> **주의 (2026-11-03).** 이 문서의 수치는 코드 리뷰(`docs/references/investigations/code_review_wht_topopt_20261103.md`) 수정 전 결과이며 재생성이 필요하다. 해당 결함: E0 = 1, nu = 0.3으로 실행되어 컴플라이언스 절대값이 약 1e5배 크다(상대 비교는 유효, 응력은 nu 차이로 약 2~3 % 다르다). SE-AHCA 응력 항이 두 번 완화되었다(R4).
+
 - 격자 MC60, 설계 체적비 0.15, 반복 100회, 해법 PARDISO(직접법)
 - 비교 대상 `base` = 기존 ex07 SE-AHCA (rho^p, 밀도 필터 없음, 이동평균 2, 투영 없음). `p`, `pm1` = 투영(beta 1->8, 20회마다 2배) + 신호 밀도 필터 단독 평활화.
 - 모든 응력은 최종 0/1 설계를 4개 하중으로 다시 풀어 요소 중심 von Mises로 계산 (`evaluate_binary_design`). 항복 903 MPa.

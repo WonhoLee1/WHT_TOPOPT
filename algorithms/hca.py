@@ -32,7 +32,7 @@ class SEAHCAConfig:
     # eta_sigma = 0.45: balanced compliance + peak stress leveling
     # eta_sigma = 1.0: pure fully stressed design (FSD)
     stress_weight_eta: float = 0.45
-    sigma_allow: float = 250.0e6           # Allowable von Mises stress [Pa] (or consistent units)
+    sigma_allow: float = 0.0               # Allowable von Mises stress in the problem's stress unit; <= 0: 90th percentile of the field
     qp_relax_exp: float = 0.50             # Low-density stress singularity relaxation exponent q
     overstress_exponent: float = 3.0       # Asymmetric penalty exponent when sigma > sigma_allow
     p_envelope: float = 12.0               # Multi-load / transient time-step P-mean envelope exponent
@@ -276,7 +276,7 @@ class HCAOptimizer(Optimizer):
         volfrac_target: float = 0.30,
         move: float = 0.15,
         stress_weight: float = 0.45,
-        sigma_allow: float = 250.0e6,
+        sigma_allow: float = 0.0,
         rho_min: float = 1e-3,
         rho_max: float = 1.0,
         config: Optional[SEAHCAConfig] = None,
@@ -338,9 +338,9 @@ class HCAOptimizer(Optimizer):
         self.last_metrics = metrics
 
         # 3. Step forward
-        xi_next, rho_next, _ = self._engine.step(
+        xi_next, _, _ = self._engine.step(
             xi_current=rho,
             cell_signal=signal,
             forward_projection_fn=forward_projection_fn,
         )
-        return rho_next
+        return xi_next  # the design variable: returning the projected field would filter it again every iteration
