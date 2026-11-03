@@ -98,11 +98,13 @@ def write_transient_plot(audits: Dict[str, Dict], load_formula: str, path: Path)
     import matplotlib.pyplot as plt
 
     labels = [k for k in next(iter(audits.values()))["dynamic"]["response"] if k != "t_ms"]
+    long_window = next(iter(audits.values()))["dynamic"]["load_profile"]["duration_s"] > 1.0  # 20 s reads as seconds, 50 ms as milliseconds
+    scale, t_label = (1e-3, "t (s)") if long_window else (1.0, "t (ms)")
     fig, axes = plt.subplots(1, len(labels), figsize=(11.0, 3.6), squeeze=False)
     for ax, lab in zip(axes[0], labels):
         for name, a in audits.items():
-            ax.plot(a["dynamic"]["response"]["t_ms"], a["dynamic"]["response"][lab], label=name, linewidth=1.3)
-        ax.set_xlabel("t (ms)", fontsize=FONT_PT)
+            ax.plot(scale * np.asarray(a["dynamic"]["response"]["t_ms"]), a["dynamic"]["response"][lab], label=name, linewidth=1.0 if long_window else 1.3)
+        ax.set_xlabel(t_label, fontsize=FONT_PT)
         ax.set_ylabel(f"{lab} (mm)", fontsize=FONT_PT)
         ax.tick_params(labelsize=FONT_PT - 1)
         ax.grid(True, linestyle=":", alpha=0.5)
@@ -110,6 +112,41 @@ def write_transient_plot(audits: Dict[str, Dict], load_formula: str, path: Path)
     fig.suptitle(load_formula, fontsize=FONT_PT)
     fig.tight_layout(rect=(0.0, 0.0, 1.0, 0.95))
     fig.savefig(path, dpi=140)
+    plt.close(fig)
+    return path
+
+
+def write_load_peaks_plot(load, peaks: Sequence[Dict], path: Path, samples: int = 4401) -> Path:
+    """The 2D load history (magnitude, direction from -y, components) with the ESL instants marked."""
+    import matplotlib
+
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    t = np.linspace(0.0, load.duration, samples)
+    f = np.array([load.force_at(float(v)).reshape(-1, 2).sum(axis=0) for v in t])
+    mag = np.hypot(f[:, 0], f[:, 1])
+    angle = np.degrees(np.arctan2(f[:, 0], -f[:, 1]))
+    angle[mag == 0.0] = np.nan
+    fig, axes = plt.subplots(3, 1, figsize=(11.0, 6.4), sharex=True)
+    for ax, y, name in zip(axes, (mag, angle, None), ("|F|", "angle from -y (deg)", "Fx, Fy")):
+        if y is None:
+            ax.plot(t, f[:, 0], linewidth=0.9, label="Fx", color="#2563eb")
+            ax.plot(t, f[:, 1], linewidth=0.9, label="Fy", color="#dc2626")
+        else:
+            ax.plot(t, y, linewidth=0.9, color="#334155")
+        for k, p in enumerate(peaks):
+            ax.axvline(p["t_s"], color="#16a34a", linewidth=1.0, linestyle="--", label="ESL peak" if y is None and k == 0 else None)
+        if y is None:
+            ax.legend(fontsize=FONT_PT - 1, loc="upper right")
+        if load.window_start > 0.0:
+            ax.axvspan(0.0, load.window_start, color="#94a3b8", alpha=0.25)
+        ax.set_ylabel(name, fontsize=FONT_PT)
+        ax.tick_params(labelsize=FONT_PT - 1)
+        ax.grid(True, linestyle=":", alpha=0.5)
+    axes[-1].set_xlabel("t (s), shaded: start-up ramp, dashed: ESL instants of the last iteration", fontsize=FONT_PT)
+    fig.tight_layout()
+    fig.savefig(path, dpi=130)
     plt.close(fig)
     return path
 
@@ -164,13 +201,14 @@ def static_table(audits: Dict[str, Dict]) -> List[List[str]]:
 def dynamic_table(audits: Dict[str, Dict]) -> List[List[str]]:
     first = next(iter(audits.values()))["dynamic"]
     labels = list(first["peak"])
-    rows = [["모델", "f1 (Hz)", "f2 (Hz)", "f3 (Hz)", "스텝"] + [f"피크 |{k}| (mm)" for k in labels] + [f"잔류 RMS {k} (mm)" for k in labels] + [f"안정화 {k} (ms)" for k in labels] + ["동적 vM (MPa)", "SF_dyn"]]
+    residual = list(first["settling_time_ms"])  # empty when the load lasts to the end of the window
+    rows = [["모델", "f1 (Hz)", "f2 (Hz)", "f3 (Hz)", "스텝"] + [f"피크 |{k}| (mm)" for k in labels] + [f"잔류 RMS {k} (mm)" for k in residual] + [f"안정화 {k} (ms)" for k in residual] + ["동적 vM (MPa)", "SF_dyn"]]
     for name, a in audits.items():
         d = a["dynamic"]
-        rows.append([name] + [f"{v:.1f}" for v in d["frequencies_hz"][:3]] + [str(d["time_steps"])] + [f"{d['peak'][k]:.4g}" for k in labels]
-                    + [f"{d['residual_rms'].get(k, float('nan')):.4g}" for k in labels]
-                    + ["구간 끝까지 미안정" if d["settling_time_ms"][k] is None else f"{d['settling_time_ms'][k]:.2f}" for k in labels]
-                    + [f"{d['von_mises_max_MPa']:.1f}", "-" if d["safety_factor"] is None else f"{d['safety_factor']:.2f}"])
+        rows.append([name] + [f"{v:.4g}" for v in d["frequencies_hz"][:3]] + [str(d["time_steps"])] + [f"{d['peak'][k]:.4g}" for k in labels]
+                    + [f"{d['residual_rms'].get(k, float('nan')):.4g}" for k in residual]
+                    + ["구간 끝까지 미안정" if d["settling_time_ms"][k] is None else f"{d['settling_time_ms'][k]:.2f}" for k in residual]
+                    + [f"{d['von_mises_max_MPa']:.4g}", "-" if d["safety_factor"] is None else f"{d['safety_factor']:.2f}"])
     return rows
 
 
@@ -204,14 +242,16 @@ cb.onchange=cut;sl.oninput=cut;cut();
 """
 
 
-def write_report(path: Path, name: str, conditions: Dict, audits: Dict[str, Dict], algorithm_rows: List[List[str]], dominance: Optional[List[Dict]], status: Dict, stl_files: Dict[str, Path], figure: Optional[Path], smoke: bool) -> None:
+def write_report(path: Path, name: str, conditions: Dict, audits: Dict[str, Dict], algorithm_rows: List[List[str]], dominance: Optional[List[Dict]], status: Dict, stl_files: Dict[str, Path], figure, smoke: bool) -> None:
+    """``figure``: one path, several paths, or None."""
     models = {k: {"color": VIEWER_MODELS.get(k, "#c0c0c0"), "stl": base64.b64encode(p.read_bytes()).decode("ascii")} for k, p in stl_files.items() if k in VIEWER_MODELS}
     viewer = script = ""
     if models:
         buttons = "".join(f"<button data-show='{k}' style='border-color:{VIEWER_MODELS[k]}'>{k}</button>" for k in models) + ("<button data-show='all' style='border-color:#a855f7'>겹쳐 보기</button>" if len(models) > 1 else "")
         viewer = f"<h2>3D 뷰어</h2><div>{buttons}<label><input type='checkbox' id='cut'> 내부 단면 절단</label> <input type='range' id='cutz' disabled></div><div id='viewer'></div>"
         script = f'<script>globalThis.__models={json.dumps(models)};</script><script type="module">{VIEWER_JS.replace("MODELS", "globalThis.__models")}</script>'
-    img = f"<img alt='results' src='data:image/png;base64,{base64.b64encode(figure.read_bytes()).decode('ascii')}'>" if figure else ""
+    figures = [figure] if isinstance(figure, Path) else list(figure or [])
+    img = "".join(f"<img alt='results' src='data:image/png;base64,{base64.b64encode(f.read_bytes()).decode('ascii')}'>" for f in figures)
     dynamic = ""
     first = next(iter(audits.values()))
     if first["dynamic"] is not None:

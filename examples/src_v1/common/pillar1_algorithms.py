@@ -42,6 +42,7 @@ class DesignRun:
     history_v: List[float] = field(default_factory=list)
     frames: List[np.ndarray] = field(default_factory=list)
     notes: List[str] = field(default_factory=list)
+    extras: Dict = field(default_factory=dict)
 
 
 @dataclass

@@ -5,7 +5,7 @@ Designs are cut to 0/1 at their target volume. All values come from the solves b
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Callable, Dict, List, Optional
+from typing import Callable, Dict, List, Optional, Tuple
 
 import numpy as np
 from scipy.sparse import coo_matrix
@@ -32,6 +32,7 @@ class TestRig:
     stiffness_tests: List[StiffnessTest]
     operating: LoadSet
     dynamic: Optional[LoadHistory] = None  # None: a static problem, no dynamic block
+    drop_detached: bool = False  # cut solid islands out of the 0/1 design: on void stiffness they are spurious near-zero modes
 
 
 def binary_design(s: Structure, rho: np.ndarray, volfrac: float) -> np.ndarray:
@@ -43,6 +44,24 @@ def binary_design(s: Structure, rho: np.ndarray, volfrac: float) -> np.ndarray:
     n_keep = int(round(volfrac * n_active)) - int(s.solid_mask.sum())
     x[design[np.argsort(-rho[design], kind="stable")[: max(n_keep, 0)]]] = 1.0
     return x
+
+
+def drop_detached_solid(s: Structure, xb: np.ndarray, forces: np.ndarray) -> Tuple[np.ndarray, int]:
+    """(design, removed elements): design elements in a part with neither a load nor a support become void. Passive solid is kept; the volume is not refilled."""
+    n_grid = int(s.conn.max()) + 1
+    solid = np.flatnonzero(xb > 0.5)
+    conn = s.conn[solid]
+    rows = np.repeat(conn[:, 0], conn.shape[1] - 1)
+    _, label = connected_components(coo_matrix((np.ones(rows.size), (rows, conn[:, 1:].ravel())), shape=(n_grid, n_grid)), directed=False)
+    on_solid = np.zeros(n_grid, dtype=bool)
+    on_solid[conn.ravel()] = True
+    anchors = np.unique(np.concatenate([np.flatnonzero(np.any(np.atleast_2d(forces) != 0.0, axis=0)) // s.dim, s.fixed_dofs // s.dim]))
+    anchors = anchors[anchors < n_grid]
+    keep = np.unique(label[anchors[on_solid[anchors]]])
+    drop = solid[~np.isin(label[conn[:, 0]], keep) & s.design_mask[solid]]
+    out = xb.copy()
+    out[drop] = 0.0
+    return out, int(drop.size)
 
 
 def load_path_connected(s: Structure, xb: np.ndarray, forces: np.ndarray) -> bool:
@@ -72,8 +91,13 @@ def load_path_connected(s: Structure, xb: np.ndarray, forces: np.ndarray) -> boo
 
 def audit_design(s: Structure, rig: TestRig, rho: np.ndarray, volfrac: float, max_steps: Optional[int] = None, n_modes: int = 3) -> Dict:
     xb = binary_design(s, rho, volfrac)
-    K = s.stiffness(xb)
     notes: List[str] = []
+    detached = 0
+    if rig.drop_detached:
+        xb, detached = drop_detached_solid(s, xb, rig.operating.forces)
+        if detached:
+            notes.append(f"{detached} detached solid element(s) removed from the 0/1 design, volume not refilled")
+    K = s.stiffness(xb)
     connected = load_path_connected(s, xb, rig.operating.forces)
     if not connected:
         notes.append("load path cut in the 0/1 design: the results measure the void stiffness")
@@ -98,7 +122,7 @@ def audit_design(s: Structure, rig: TestRig, rho: np.ndarray, volfrac: float, ma
     }
     if rig.dynamic is not None:
         static["tip_displacement_mm"] = {n: [float(v) for v in rig.dynamic.tip_response(u_op[k])] for k, n in enumerate(rig.operating.names)}
-    base = {"volume_fraction": s.volume_fraction(xb), "mass_g": None if s.density is None else s.mass_g(xb), "load_path_connected": connected, "static": static, "dynamic": None, "notes": notes, "xb": xb}
+    base = {"volume_fraction": s.volume_fraction(xb), "mass_g": None if s.density is None else s.mass_g(xb), "load_path_connected": connected, "detached_elements_removed": detached, "static": static, "dynamic": None, "notes": notes, "xb": xb}
     if s.yield_stress is None:
         notes.append("non-dimensional problem: no yield check")
     if rig.dynamic is None or s.density is None:
@@ -109,24 +133,27 @@ def audit_design(s: Structure, rig: TestRig, rho: np.ndarray, volfrac: float, ma
     freqs = s.natural_frequencies(K, M, k=n_modes)
     times, grid_notes = time_grid(s, xb, rig.dynamic, max_steps)
     notes += grid_notes
-    tr = s.transient(K, M, rig.dynamic.force_at, times, store_every=max(1, (len(times) - 1) // 400))
+    tr = s.transient(K, M, rig.dynamic.force_at, times, store_every=1 if rig.dynamic.store_all else max(1, (len(times) - 1) // 400))
     tips = np.stack([rig.dynamic.tip_response(s.expand(tr.u[i])) for i in range(tr.stored.size)])
     t_stored = times[tr.stored]
-    peak = {lab: float(np.max(np.abs(tips[:, c]))) for c, lab in enumerate(rig.dynamic.tip_labels)}
+    window = t_stored >= rig.dynamic.window_start
+    peak = {lab: float(np.max(np.abs(tips[window, c]))) for c, lab in enumerate(rig.dynamic.tip_labels)}
     end = rig.dynamic.load_end if rig.dynamic.load_end is not None else 0.8 * rig.dynamic.duration
     tail = t_stored >= end
-    rms = {lab: float(np.sqrt(np.mean(tips[tail, c] ** 2))) for c, lab in enumerate(rig.dynamic.tip_labels)} if tail.any() else {}
+    rms = {lab: float(np.sqrt(np.mean(tips[tail, c] ** 2))) for c, lab in enumerate(rig.dynamic.tip_labels)} if tail.any() and rig.dynamic.has_residual_phase else {}
     settle: Dict[str, Optional[float]] = {}
-    for c, lab in enumerate(rig.dynamic.tip_labels):
+    for c, lab in enumerate(rig.dynamic.tip_labels if rig.dynamic.has_residual_phase else ()):
         band = 0.05 * max(peak[lab], 1e-30)
         after = np.flatnonzero((t_stored >= end) & (np.abs(tips[:, c]) > band))
         # None: still outside the 5 % band at the end of the window, so no settling time can be stated
         settle[lab] = None if after.size and after[-1] == t_stored.size - 1 else (float(t_stored[after[-1]] - end) * 1e3 if after.size else 0.0)
-    peak_i = int(np.argmax(np.max(np.abs(tips), axis=1)))
-    vm_dyn = np.max(np.stack([s.von_mises(s.expand(tr.u[i]))[solid] for i in np.unique([peak_i, int(np.argmax(tr.energy[tr.stored]))])]), axis=0)
+    in_window = np.flatnonzero(window)
+    peak_i = int(in_window[np.argmax(np.max(np.abs(tips[in_window]), axis=1))])
+    energy_i = int(in_window[np.argmax(tr.energy[tr.stored][in_window])])
+    vm_dyn = np.max(np.stack([s.von_mises(s.expand(tr.u[i]))[solid] for i in np.unique([peak_i, energy_i])]), axis=0)
     sigma_dyn = float(vm_dyn.max())
     dynamic = {
-        "load_profile": {"name": rig.dynamic.name, "formula": rig.dynamic.formula, "peak_force_N": rig.dynamic.peak_force, "duration_s": rig.dynamic.duration, "load_end_s": end},
+        "load_profile": {"name": rig.dynamic.name, "formula": rig.dynamic.formula, "peak_force_N": rig.dynamic.peak_force, "duration_s": rig.dynamic.duration, "load_end_s": end, "window_start_s": rig.dynamic.window_start},
         "frequencies_hz": freqs,
         "time_steps": len(times),
         "peak": peak,

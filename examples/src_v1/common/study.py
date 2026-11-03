@@ -18,7 +18,7 @@ from .pillar1_algorithms import ALGORITHMS, DesignRun, LoadSet, run_algorithms, 
 from .pillar2_static_dynamic import run_static_vs_dynamic
 from .pillar3_volume_relaxed import dominance_table, run_volume_relaxed
 from .pillar5_audit import TestRig, audit_design
-from .pillar6_deliverables import OUTPUT_ROOT, PILLARS, export_stl, pillar_status, write_design_figure, write_progression_2d, write_report, write_transient_plot, write_voxel_gif
+from .pillar6_deliverables import OUTPUT_ROOT, PILLARS, export_stl, pillar_status, write_design_figure, write_load_peaks_plot, write_progression_2d, write_report, write_transient_plot, write_voxel_gif
 from .structure import Structure
 
 
@@ -134,6 +134,14 @@ def run_study(st: Study, algorithms: Sequence[str] = ALGORITHMS, root: Optional[
     if model3 is not None:
         figure = write_transient_plot({k: audits[k] for k in ("model1_static", "model2_dynamic", "model3_relaxed")}, st.rig.dynamic.formula, p[5] / f"{st.name}_transient_vibration.png")
         files.append(figure)
+    elif model2 is not None and s.dim == 2:
+        figures = [
+            write_transient_plot({k: audits[k] for k in ("model1_static", "model2_dynamic")}, st.rig.dynamic.name, p[5] / f"{st.name}_transient_response.png"),
+            write_load_peaks_plot(st.rig.dynamic, model2.extras["esl_peaks_last_iteration"], p[5] / f"{st.name}_load_history_peaks.png"),
+            write_design_figure(s, [model1, model2], audits, p[2] / f"{st.name}_static_vs_dynamic.png"),
+        ]
+        files += figures + [write_progression_2d(s, [model1, model2], p[2] / f"{st.name}_static_vs_dynamic.gif")]
+        figure = figures
 
     if s.dim == 3 or st.rig.dynamic is not None:
         notes[1] = f"Kratos 미실행: {next(iter(skipped.values()))}"
@@ -141,7 +149,7 @@ def run_study(st: Study, algorithms: Sequence[str] = ALGORITHMS, root: Optional[
     conditions = {"elements": s.n_elem, "design_elements": int(s.design_mask.sum()), "E0": s.e0, "nu": s.nu, "density": s.density, "yield": s.yield_stress, "volfrac": st.volfrac, "delta_v": st.delta_v, "rmin": st.rmin, "smoke": st.smoke}
     public = lambda a: {k: v for k, v in a.items() if k != "xb"}
     metrics = {"example": st.name, "conditions": conditions, "algorithms": {k: public(v) for k, v in algo_audits.items()}, "models": {k: public(v) for k, v in audits.items()}, "dominance": dominance, "skipped": skipped, "stl": stl_info,
-               "timing": {r.label: {"iterations": r.iterations, "converged": r.converged, "volume_fraction": s.volume_fraction(r.rho), "grayness": s.grayness(r.rho), "t_total_s": r.t_total, "t_fem_s": r.t_fem, "t_sens_s": r.t_sens, "t_opt_s": r.t_opt, "history_c": r.history_c, "notes": r.notes} for r in [*algo_runs, *models, *mfg_runs]}}
+               "timing": {r.label: {"iterations": r.iterations, "converged": r.converged, "volume_fraction": s.volume_fraction(r.rho), "grayness": s.grayness(r.rho), "t_total_s": r.t_total, "t_fem_s": r.t_fem, "t_sens_s": r.t_sens, "t_opt_s": r.t_opt, "history_c": r.history_c, "notes": r.notes, **r.extras} for r in [*algo_runs, *models, *mfg_runs]}}
     metrics_path = p[5] / f"{st.name}_cross_stiffness_metrics.json"
     metrics_path.write_text(json.dumps(metrics, ensure_ascii=False, indent=1, default=lambda o: o.item() if hasattr(o, "item") else o.tolist()), encoding="utf-8")
     files.append(metrics_path)
@@ -154,6 +162,19 @@ def run_study(st: Study, algorithms: Sequence[str] = ALGORITHMS, root: Optional[
     lines += ["", "## Pillar 상태", ""] + [f"- Pillar {k}: {v['status']}" + (f" ({v['reason']})" if "reason" in v else "") for k, v in status.items()]
     if dominance:
         lines += ["", "## Pillar 3 목표", ""] + [f"- {d['target']}: {d['model1']:.4g} -> {d['model3']:.4g} ({d['change_percent']:+.1f} %), {'달성' if d['passed'] else '미달'}" for d in dominance]
+    if model2 is not None and model3 is None:
+        d1, d2 = audits["model1_static"]["dynamic"], audits["model2_dynamic"]["dynamic"]
+        change = lambda a, b: f"{100.0 * (b - a) / a:+.1f}" if a else "-"
+        lines += ["", "## 정적 vs 동적 (같은 하중 이력)", "", f"- 하중: {st.rig.dynamic.formula}", "", "| 지표 | model1_static | model2_dynamic | 변화 (%) |", "|---|---|---|---|"]
+        lines += [f"| 피크 abs {k} | {d1['peak'][k]:.5g} | {d2['peak'][k]:.5g} | {change(d1['peak'][k], d2['peak'][k])} |" for k in d1["peak"]]
+        lines.append(f"| 동적 최대 vM | {d1['von_mises_max_MPa']:.5g} | {d2['von_mises_max_MPa']:.5g} | {change(d1['von_mises_max_MPa'], d2['von_mises_max_MPa'])} |")
+        lines += [f"| f{k + 1} (Hz) | {a:.4g} | {b:.4g} | {change(a, b)} |" for k, (a, b) in enumerate(zip(d1["frequencies_hz"], d2["frequencies_hz"]))]
+        lines += ["", "## ESL 피크 (마지막 반복)", "", "| t (s) | u^T K u | w | 하중 합력 |", "|---|---|---|---|"]
+        lines += [f"| {q['t_s']:.2f} | {q['energy']:.4g} | {q['weight']:.3f} | {', '.join(format(v, '.3f') for v in q['force'])} |" for q in model2.extras["esl_peaks_last_iteration"]]
+        lines += ["", "- 0차 ESL: 과도 수반해석이 없어 KKT 보장이 없다.", f"- 수렴: model1 {'예' if model1.converged else '아니오'} ({model1.iterations} 반복), model2 {'예' if model2.converged else '아니오'} ({model2.iterations} 반복)"]
+        notes_all = sorted({n for a in report_audits.values() for n in a["notes"]})
+        if notes_all:
+            lines += ["", "## 주의", ""] + [f"- {n}" for n in notes_all]
     if st.smoke:
         lines += ["", "**스모크 실행: 수치를 결과로 쓰지 말 것.**"]
     summary = p[6] / f"{st.name}_summary.md"
@@ -165,10 +186,10 @@ def run_study(st: Study, algorithms: Sequence[str] = ALGORITHMS, root: Optional[
     return manifest
 
 
-def main(build: Callable[..., Study], full: Dict, smoke: Dict, argv: Optional[Sequence[str]] = None) -> Dict:
+def main(build: Callable[..., Study], full: Dict, smoke: Dict, argv: Optional[Sequence[str]] = None, default_algos: Sequence[str] = ALGORITHMS) -> Dict:
     ap = argparse.ArgumentParser()
     ap.add_argument("--smoke", action="store_true", help="small mesh and few iterations: checks the chain, the numbers mean nothing")
-    ap.add_argument("--algos", nargs="*", default=list(ALGORITHMS))
+    ap.add_argument("--algos", nargs="*", default=list(default_algos))
     ap.add_argument("--iters", type=int, default=None)
     ap.add_argument("-o", "--output-root", type=Path, default=None)
     args = ap.parse_args(argv)
